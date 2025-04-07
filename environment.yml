@@ -1,0 +1,15 @@
+name: rf-vision
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - scipy
+  - pandas
+  - pydantic
+  - pyzmq
+  - msgpack-python
+  - pip
+  - pip:
+      - -e . # Install your package in editable mode

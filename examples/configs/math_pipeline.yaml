@@ -1,0 +1,20 @@
+# tests/configs/math_pipeline.yaml
+nodes:
+  - type: number_generator
+    params:
+      start: 2
+      step: 3
+    outputs: [numbers]
+
+  - type: math_multiply
+    params:
+      multiplier: 1
+    inputs: [numbers]
+    outputs: [processed]
+
+  - type: udp_out
+    params:
+      ip: "localhost"
+      port: 9000
+      protocol: "UDP"
+    inputs: [processed]

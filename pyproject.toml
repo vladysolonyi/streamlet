@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=67.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rf-vision"
+version = "0.1.0"
+description = "Modular RF Signal Processing Framework"
+authors = [{name = "Vladyslav Solonyi", email = "vladysolonyi@gmail.com"}]
+license = {text = "none"}
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.23",
+    "pydantic>=2.0",
+    "msgpack>=1.0",
+    "pyzmq>=25.0",
+    "pandas>=2.0",
+    "scipy>=1.10"
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0", "pytest-cov"]
+docs = ["sphinx>=6.0", "sphinx-rtd-theme"]
+dev = ["ipython", "jupyterlab"]
+
+[project.urls]
+Homepage = "https://github.com/vladysolonyi/rf-vision"
+Documentation = "https://vladysolonyi.github.io/rf-vision/"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-v --cov=framework --cov-report=term-missing"
+testpaths = ["tests"]
