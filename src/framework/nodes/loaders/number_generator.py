@@ -1,14 +1,22 @@
 from framework.nodes import BaseNode
+from pydantic import BaseModel
 
 class NumberGenerator(BaseNode):
     node_type = "number_generator"
     IS_ACTIVE = True  # Actively generates data
-    
+
+    class Params(BaseModel):  # Nested Params model
+        current: int = 0
+        step: int = 1
+
     def __init__(self, config):
         super().__init__(config)
-        self.current = config['params']['start']
-        self.step = config['params']['step']
+        # Validate params using Pydantic model
+        self.params = self.Params(**config.get('params', {}))
         
+        # Access validated parameters
+        self.current = self.params.current
+        self.step = self.params.step
     def should_process(self):
         """Generate new numbers continuously"""
         return True

@@ -1,19 +1,27 @@
 import socket
 import logging
 from framework.nodes.base_node import BaseNode
+from pydantic import BaseModel
 
 class UDPOut(BaseNode):
     """Node for sending processed data via UDP"""
     node_type = "udp_out"
     
+    class Params(BaseModel):  # Nested Params model
+        ip: str = "127.0.0.1"
+        port: int = 12345
+        protocol: str = "udp"
+        buffer_size: int = 1024
+
     def __init__(self, config):
         super().__init__(config)
-        params = config.get('params', {})
+        # Validate params using Pydantic model
+        self.params = self.Params(**config.get('params', {}))
         
-        # Network configuration
-        self.target_ip = params.get('ip', '127.0.0.1')
-        self.target_port = params.get('port', 12345)
-        self.protocol = params.get('protocol', 'UDP').upper()
+        # Access validated parameters
+        self.target_ip = self.params.ip
+        self.target_port = self.params.port
+        self.protocol = self.params.protocol.upper()
         
         # Socket setup
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

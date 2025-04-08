@@ -1,7 +1,7 @@
 from framework.core import Pipeline
 
 
-pipeline = Pipeline("configs/math_pipeline.yaml")
+pipeline = Pipeline("configs/math_pipeline.json")
 pipeline.build()
 
 # Test single iteration

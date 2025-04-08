@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Dict, List
 from .data_bus import DataBus
 from .registry import NodeRegistry
+from pydantic import ValidationError
 
 class Pipeline:
     def __init__(self, config_path: str):
@@ -51,6 +52,18 @@ class Pipeline:
                 self.data_bus.register_channel(channel)
 
         self.logger.debug("Pipeline construction completed")
+
+    def update_node_params(self, node_id: str, new_params: dict):
+        node = self.get_node(node_id)
+        NodeClass = NodeRegistry.get_class(node.node_type)
+        
+        try:
+            validated = NodeClass.Params(**new_params)
+        except ValidationError as e:
+            raise InvalidParameters(e.json())
+            
+        node.config["params"].update(validated.dict())
+        node.apply_params()  # Node-specific implementation
 
     def run(self):
         """Execute the processing pipeline"""
