@@ -4,9 +4,19 @@ from fastapi.security import APIKeyHeader
 from framework.core import Pipeline, NodeRegistry
 from uuid import UUID, uuid4
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+from typing import Union
 import yaml
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Your frontend origin
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 api_keys = ["SECRET_KEY"]  # In production, use proper auth
 security = APIKeyHeader(name="X-API-Key")
 
@@ -14,7 +24,7 @@ security = APIKeyHeader(name="X-API-Key")
 pipelines = {}
 
 class PipelineConfig(BaseModel):
-    config: dict  # YAML/JSON config
+    config: Union[str, dict]  # Accept both path and direct config
     name: str
 
 class NodeUpdate(BaseModel):
@@ -23,15 +33,16 @@ class NodeUpdate(BaseModel):
 
 # --- Core Endpoints ---
 @app.post("/pipelines", status_code=201)
-async def create_pipeline(
-    config: PipelineConfig,
-    api_key: str = Security(security)
-):
-    """Create new processing pipeline"""
-    pipeline_id = uuid4()
+async def create_pipeline(config: PipelineConfig):
     try:
-        pipeline = Pipeline(config.config)
+        # Handle both config formats
+        if isinstance(config.config, str):
+            pipeline = Pipeline(config.config)
+        else:
+            pipeline = Pipeline(config.config)
+            
         pipeline.build()
+        pipeline_id = uuid4()
         pipelines[pipeline_id] = {
             "instance": pipeline,
             "status": "stopped",
@@ -39,14 +50,11 @@ async def create_pipeline(
         }
         return {"id": str(pipeline_id), "status": "created"}
     except Exception as e:
-        raise HTTPException(400, f"Pipeline creation failed: {str(e)}")
+        raise HTTPException(400, f"Pipeline creation failed: {str(e)} {config}")
 
 @app.post("/pipelines/{pipeline_id}/start")
-async def start_pipeline(
-    pipeline_id: UUID,
-    api_key: str = Security(security)
-):
-    """Start pipeline execution"""
+async def start_pipeline(pipeline_id: UUID):
+    """Start pipeline in background"""
     pipeline = _get_pipeline(pipeline_id)
     try:
         pipeline["instance"].run()
@@ -56,10 +64,7 @@ async def start_pipeline(
         raise HTTPException(500, f"Start failed: {str(e)}")
 
 @app.post("/pipelines/{pipeline_id}/stop")
-async def stop_pipeline(
-    pipeline_id: UUID,
-    api_key: str = Security(security)
-):
+async def stop_pipeline(pipeline_id: UUID):
     """Stop pipeline execution"""
     pipeline = _get_pipeline(pipeline_id)
     try:

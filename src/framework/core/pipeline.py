@@ -1,32 +1,40 @@
 import logging
 from pathlib import Path
-from typing import Dict, List
 from .data_bus import DataBus
 from .registry import NodeRegistry
 from pydantic import ValidationError
+from typing import Union, Dict, Any
+import json
+import threading
+import time
 
 class Pipeline:
-    def __init__(self, config_path: str):
+    def __init__(self, config_source: Union[str, Dict]):
+        self._running = threading.Event()
+        self._thread = None
         self.nodes = []
         self.data_bus = DataBus()
-        self.config = self._load_config(config_path)
+        self.config = self._load_config(config_source)
         self.logger = logging.getLogger('pipeline')
 
-    def _load_config(self, config_path: str) -> Dict:
-        """Load pipeline configuration from YAML/JSON"""
-        config_file = Path(config_path)
-        if not config_file.exists():
-            raise FileNotFoundError(f"Pipeline config {config_path} not found")
-        
-        # Add support for both YAML and JSON
-        if config_file.suffix == '.yaml':
-            import yaml
-            return yaml.safe_load(config_file.read_text())
-        elif config_file.suffix == '.json':
-            import json
-            return json.loads(config_file.read_text())
+    def _load_config(self, source: Union[str, Dict]) -> Dict:
+        """Load config from file path or dict"""
+        if isinstance(source, str):
+            config_file = Path(source)
+            if not config_file.exists():
+                raise FileNotFoundError(f"Config file {source} not found")
+            
+            if config_file.suffix == '.json':
+                with open(config_file) as f:
+                    return json.load(f)
+            else:
+                raise ValueError("Only JSON config files supported")
+                
+        elif isinstance(source, Dict):
+            return source
+            
         else:
-            raise ValueError("Unsupported config format")
+            raise TypeError("Config must be file path (str) or dict")
 
     def build(self):
         """Instantiate and connect nodes"""
@@ -66,22 +74,31 @@ class Pipeline:
         node.apply_params()  # Node-specific implementation
 
     def run(self):
-        """Execute the processing pipeline"""
+        """Non-blocking execution in background thread"""
+        if self._running.is_set():
+            return
+            
+        self._running.set()
+        self._thread = threading.Thread(target=self._run_loop)
+        self._thread.start()
+
+    def _run_loop(self):
+        """Main processing loop for background execution"""
         self.logger.info("Starting pipeline execution")
         try:
-            while True:  # Main processing loop
-                # Only process active nodes that generate data
+            while self._running.is_set():
                 for node in self.nodes:
                     if node.should_process():
                         node.process()
-        except KeyboardInterrupt:
-            self.logger.info("Pipeline execution interrupted")
+                time.sleep(0.001)  # Prevent CPU hogging
+        except Exception as e:
+            self.logger.error(f"Pipeline failed: {str(e)}")
         finally:
             self.shutdown()
 
     def shutdown(self):
-        """Cleanup resources"""
-        self.logger.info("Shutting down pipeline")
-        for node in self.nodes:
-            node.cleanup()
-        self.data_bus.flush()
+        """Graceful pipeline termination"""
+        if self._running.is_set():
+            self.logger.info("Stopping pipeline...")
+            self._running.clear()
+            self._thread.join(timeout=5)

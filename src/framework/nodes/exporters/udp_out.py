@@ -9,7 +9,7 @@ class UDPOut(BaseNode):
     
     class Params(BaseModel):  # Nested Params model
         ip: str = "127.0.0.1"
-        port: int = 12345
+        port: int = 7000
         protocol: str = "udp"
         buffer_size: int = 1024
 

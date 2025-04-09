@@ -1,108 +1,144 @@
-import React, { useCallback } from 'react';
+import React, { useRef, useCallback, useState, useEffect } from "react";
 import {
-  Background,
   ReactFlow,
+  ReactFlowProvider,
   addEdge,
-  ConnectionLineType,
-  Panel,
+  useNodes,
   useNodesState,
+  useEdges,
   useEdgesState,
-} from '@xyflow/react';
-import dagre from '@dagrejs/dagre';
+  Controls,
+  useReactFlow,
+  Background,
+} from "@xyflow/react";
 
-import '@xyflow/react/dist/style.css';
+import "@xyflow/react/dist/style.css";
 
-import { initialNodes, initialEdges } from './initialElements';
+import Sidebar from "./Sidebar";
+import config from "./math_pipeline.json"; // Direct JSON import
+import { parseConfig, composeConfig } from "./configUtils";
+import PipelineControls from "./PipelineControls";
+const { initialNodes, initialEdges } = parseConfig(config);
 
-const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+export { initialNodes, initialEdges };
+import { DnDProvider, useDnD } from "./DnDContext";
+import { use } from "express/lib/application";
 
-const nodeWidth = 172;
-const nodeHeight = 36;
+let id = 0;
+const getId = () => `dndnode_${id++}`;
+const DnDFlow = () => {
+  const reactFlowWrapper = useRef(null);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const { screenToFlowPosition } = useReactFlow();
+  const [type] = useDnD();
+  const nodeArray = useEdges();
 
-const getLayoutedElements = (nodes, edges, direction = 'TB') => {
-  const isHorizontal = direction === 'LR';
-  dagreGraph.setGraph({ rankdir: direction });
-
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-  });
-
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
-  dagre.layout(dagreGraph);
-
-  const newNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    const newNode = {
-      ...node,
-      targetPosition: isHorizontal ? 'left' : 'top',
-      sourcePosition: isHorizontal ? 'right' : 'bottom',
-      // We are shifting the dagre node position (anchor=center center) to the top left
-      // so it matches the React Flow node anchor point (top left).
-      position: {
-        x: nodeWithPosition.x - nodeWidth / 2,
-        y: nodeWithPosition.y - nodeHeight / 2,
-      },
-    };
-
-    return newNode;
-  });
-
-  return { nodes: newNodes, edges };
-};
-
-const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-  initialNodes,
-  initialEdges,
-);
-
-const Flow = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);
+  useEffect(() => {
+    fetch("http://localhost:8000/node-types")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, []);
 
   const onConnect = useCallback(
-    (params) =>
-      setEdges((eds) =>
-        addEdge(
-          { ...params, type: ConnectionLineType.SmoothStep, animated: true },
-          eds,
-        ),
-      ),
-    [],
-  );
-  const onLayout = useCallback(
-    (direction) => {
-      const { nodes: layoutedNodes, edges: layoutedEdges } =
-        getLayoutedElements(nodes, edges, direction);
+    (connection) => {
+      // Get the source node's details
+      const sourceNode = nodes.find((n) => n.id === connection.source);
+      // Use the first output channel by default (or implement channel selection UI)
+      const outputChannel = sourceNode?.data.outputs?.[0] || "default";
 
-      setNodes([...layoutedNodes]);
-      setEdges([...layoutedEdges]);
+      // Create the new edge with proper channel labeling
+      const newEdge = {
+        ...connection,
+        id: `${connection.source}-${outputChannel}-${connection.target}`,
+        label: outputChannel,
+        animated: true,
+      };
+
+      setEdges((eds) => addEdge(newEdge, eds));
     },
-    [nodes, edges],
+    [nodes]
   );
+
+  const onDragOver = useCallback((event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }, []);
+
+  const onDrop = useCallback(
+    (event) => {
+      event.preventDefault();
+
+      // check if the dropped element is valid
+      if (!type) {
+        return;
+      }
+
+      // project was renamed to screenToFlowPosition
+      // and you don't need to subtract the reactFlowBounds.left/top anymore
+      // details: https://reactflow.dev/whats-new/2023-11-10
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+      const newNode = {
+        id: getId(),
+        type,
+        position,
+        data: { label: `${type} node` },
+      };
+
+      setNodes((nds) => nds.concat(newNode));
+      console.log(nodeArray);
+    },
+    [screenToFlowPosition, type]
+  );
+
+  const handleExport = useCallback(() => {
+    const currentConfig = composeConfig(nodes, edges);
+    console.log("Exported Config:", JSON.stringify(currentConfig, null, 2));
+    // Add logic to save/download the config
+  }, [nodes, edges]);
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      connectionLineType={ConnectionLineType.SmoothStep}
-      fitView
-      style={{ backgroundColor: "#F7F9FB" }}
-    >
-      <Panel position="top-right">
-        <button onClick={() => onLayout('TB')}>vertical layout</button>
-        <button onClick={() => onLayout('LR')}>horizontal layout</button>
-      </Panel>
-      <Background />
-    </ReactFlow>
+    <div className="dndflow">
+      <div className="reactflow-wrapper" ref={reactFlowWrapper}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          fitView
+          style={{ backgroundColor: "#F7F9FB" }}
+        >
+          <Controls />
+          <Background />
+        </ReactFlow>
+      </div>
+      <Sidebar />
+      <PipelineControls config={composeConfig(nodes, edges)} />
+      <button
+        onClick={handleExport}
+        style={{ position: "absolute", bottom: 10, right: 10 }}
+      >
+        Export Config
+      </button>
+    </div>
   );
 };
 
-export function App() {
-  return <Flow />;
-}
+export default () => (
+  <ReactFlowProvider>
+    <DnDProvider>
+      <DnDFlow />
+    </DnDProvider>
+  </ReactFlowProvider>
+);

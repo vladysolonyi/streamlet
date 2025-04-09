@@ -5,7 +5,6 @@ from pydantic import BaseModel
 class ConsoleLogger(BaseNode):
     """Logs data to console for debugging"""
     node_type = "console_logger"
-
     class Params(BaseModel):  # Nested Params model
         prefix: str = "[LOG]"
 

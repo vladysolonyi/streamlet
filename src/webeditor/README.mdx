@@ -1,13 +1,8 @@
 ---
-title: Dagre Tree
-description: Integrate dagre js with React Flow to create simple tree layouts
+title: Drag and Drop
+description: Drag and drop outside of the React Flow pane with native HTML Drag and Drop API or react-draggable.
 ---
 
-This example shows how you can integrate [dagre.js](https://github.com/dagrejs/dagre) with React Flow to create simple tree layouts. Good alternatives to dagre are [d3-hierarchy](https://github.com/d3/d3-hierarchy) or [elkjs](https://github.com/kieler/elkjs) if you are looking for a more advanced layouting library.
+A drag and drop user interface is very common for node-based workflow editors. The drag and drop behavior outside of the React Flow pane is not built in but can be implemented with the native [HTML Drag and Drop API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API) (used in this example) or a third party library like [react-draggable](https://github.com/react-grid-layout/react-draggable).
 
-<RemoteCodeViewer route="examples/layout/dagre" framework="react" />
-
-This example is a demonstration of _static_ layouting. If the nodes or edges in
-the graph change, the layout _won't_ recalculate! It is possible to do dynamic
-layouting with dagre (and other libraries), though: see the [auto layout](/examples/layout/auto-layout)
-pro example for an example of this.
+<RemoteCodeViewer route="examples/interaction/drag-and-drop" framework="react" />
