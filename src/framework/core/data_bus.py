@@ -1,6 +1,7 @@
 from collections import defaultdict
 import msgpack
 from typing import Any, Callable, Dict
+from framework.data.data_packet import DataPacket
 
 class DataBus:
     def __init__(self):
@@ -18,10 +19,22 @@ class DataBus:
         self.subscribers[channel].append(node.on_data)
 
     def publish(self, channel: str, data: Any):
-        """Push data to channel with serialization"""
-        packed = self.serializer.packb(data)
+        """Handle serialization transparently"""
+        # Serialize
+        if isinstance(data, DataPacket):
+            packed = self.serializer.packb(data.model_dump(mode='json'))
+        else:
+            packed = self.serializer.packb(data)
+
+        # Deserialize for subscribers
+        unpacked = self.serializer.unpackb(packed)
+        is_packet = isinstance(unpacked, dict) and 'data_type' in unpacked
+
         for callback in self.subscribers[channel]:
-            callback(self.serializer.unpackb(packed))
+            if is_packet:
+                callback(DataPacket.model_validate(unpacked))
+            else:
+                callback(unpacked)
 
     def flush(self):
         for ch in self.channels:

@@ -2,6 +2,14 @@
 from fastapi import FastAPI, HTTPException, Security
 from fastapi.security import APIKeyHeader
 from framework.core import Pipeline, NodeRegistry
+from framework.data.data_types import (
+    DataType,
+    DataFormat, 
+    DataCategory,
+    LifecycleState,
+    SensitivityLevel,
+    DataSource
+)
 from uuid import UUID, uuid4
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -132,4 +140,23 @@ async def get_available_nodes():
             "category": NodeRegistry.get_category(nt)
         }
         for nt in NodeRegistry.list_available()
+    }
+
+@app.get("/data-spec")
+async def get_data_specification():
+    """Return full data type specification for UI/validation"""
+    return {
+        "data_types": {dt.name: dt.value for dt in DataType},
+        "formats": {fmt.name: fmt.value for fmt in DataFormat},
+        "categories": {cat.name: cat.value for cat in DataCategory},
+        "lifecycle_states": {ls.name: ls.value for ls in LifecycleState},
+        "sensitivity_levels": {sl.name: sl.value for sl in SensitivityLevel},
+        "sources": {src.name: src.value for src in DataSource},
+        
+        # For surveillance critique - add semantic meanings
+        "type_descriptions": {
+            DataType.STREAM.value: "Real-time surveillance feeds",
+            DataCategory.GEOSPATIAL.value: "Location tracking data",
+            SensitivityLevel.RESTRICTED.value: "Classified surveillance material"
+        }
     }

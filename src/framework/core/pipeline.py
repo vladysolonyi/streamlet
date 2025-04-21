@@ -16,6 +16,7 @@ class Pipeline:
         self.data_bus = DataBus()
         self.config = self._load_config(config_source)
         self.logger = logging.getLogger('pipeline')
+        self.node_map = {}  # Maps node names to instances
 
     def _load_config(self, source: Union[str, Dict]) -> Dict:
         """Load config from file path or dict"""
@@ -37,27 +38,45 @@ class Pipeline:
             raise TypeError("Config must be file path (str) or dict")
 
     def build(self):
-        """Instantiate and connect nodes"""
+        """Instantiate and connect nodes using declarative names"""
         self.logger.info("Building pipeline with %d nodes", len(self.config['nodes']))
         
+        # First pass: create all nodes
         for node_config in self.config['nodes']:
-            # Create node with only type and params
+            if 'name' not in node_config:
+                raise ValueError("All nodes must have a 'name' field")
+                
+            node_name = node_config['name']
+            if node_name in self.node_map:
+                raise ValueError(f"Duplicate node name: {node_name}")
+            
             node = NodeRegistry.create(
                 node_type=node_config['type'],
-                config=node_config  # Pass full node config
+                config=node_config
             )
-            
-            # Set connection parameters AFTER creation
-            node.inputs = node_config.get('inputs', [])
-            node.outputs = node_config.get('outputs', [])
             node.data_bus = self.data_bus
             self.nodes.append(node)
+            self.node_map[node_name] = node
+
+        # Second pass: connect nodes by name
+        for node in self.nodes:
+            node_name = node.config['name']
             
-            # Connect to data bus
-            for channel in node.inputs:
-                self.data_bus.subscribe(node, channel)
-            for channel in node.outputs:
-                self.data_bus.register_channel(channel)
+            # Auto-create output channel
+            output_channel = f"{node_name}_out"
+            node.outputs = [output_channel]
+            self.data_bus.register_channel(output_channel)
+            
+            # Resolve inputs to upstream outputs
+            node.inputs = []
+            for input_ref in node.config.get('inputs', []):
+                if input_ref not in self.node_map:
+                    raise ValueError(f"Unknown input reference '{input_ref}' "
+                                   f"for node '{node_name}'")
+                
+                upstream_channel = f"{input_ref}_out"
+                self.data_bus.subscribe(node, upstream_channel)
+                node.inputs.append(upstream_channel)
 
         self.logger.debug("Pipeline construction completed")
 
@@ -97,8 +116,9 @@ class Pipeline:
             self.shutdown()
 
     def shutdown(self):
-        """Graceful pipeline termination"""
+        """Safe thread termination with ownership check"""
         if self._running.is_set():
-            self.logger.info("Stopping pipeline...")
             self._running.clear()
-            self._thread.join(timeout=5)
+            if self._thread is not None and self._thread is not threading.current_thread():
+                self._thread.join(timeout=5)
+            self._thread = None

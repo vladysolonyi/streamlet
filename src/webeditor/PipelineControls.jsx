@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { initialNodes, initialEdges } from "./App";
 import { composeConfig } from "./configUtils";
 const API_KEY = "SECRET_KEY"; // Should use environment variables in production
 

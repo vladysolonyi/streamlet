@@ -3,66 +3,48 @@ import {
   ReactFlow,
   ReactFlowProvider,
   addEdge,
-  useNodes,
   useNodesState,
-  useEdges,
   useEdgesState,
   Controls,
   useReactFlow,
   Background,
 } from "@xyflow/react";
-
 import "@xyflow/react/dist/style.css";
 
 import Sidebar from "./Sidebar";
-import config from "./math_pipeline.json"; // Direct JSON import
+import config from "./math_pipeline.json";
 import { parseConfig, composeConfig } from "./configUtils";
 import PipelineControls from "./PipelineControls";
+import { DnDProvider, useDnD } from "./DnDContext";
+
 const { initialNodes, initialEdges } = parseConfig(config);
 
-export { initialNodes, initialEdges };
-import { DnDProvider, useDnD } from "./DnDContext";
-import { use } from "express/lib/application";
-
-let id = 0;
-const getId = () => `dndnode_${id++}`;
 const DnDFlow = () => {
   const reactFlowWrapper = useRef(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const { screenToFlowPosition } = useReactFlow();
   const [type] = useDnD();
-  const nodeArray = useEdges();
+  const nodeCount = useRef(new Map());
 
-  useEffect(() => {
-    fetch("http://localhost:8000/node-types")
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-  }, []);
+  const getDefaultName = (nodeType) => {
+    const count = nodeCount.current.get(nodeType) || 0;
+    nodeCount.current.set(nodeType, count + 1);
+    return `${nodeType}_${count + 1}`;
+  };
+
+  const getDefaultParams = (nodeType) => {
+    const defaults = {
+      number_generator: { current: 0, step: 1 },
+      math_multiply: { multiplier: 0 },
+      console_logger: {},
+    };
+    return defaults[nodeType] || {};
+  };
 
   const onConnect = useCallback(
-    (connection) => {
-      // Get the source node's details
-      const sourceNode = nodes.find((n) => n.id === connection.source);
-      // Use the first output channel by default (or implement channel selection UI)
-      const outputChannel = sourceNode?.data.outputs?.[0] || "default";
-
-      // Create the new edge with proper channel labeling
-      const newEdge = {
-        ...connection,
-        id: `${connection.source}-${outputChannel}-${connection.target}`,
-        label: outputChannel,
-        animated: true,
-      };
-
-      setEdges((eds) => addEdge(newEdge, eds));
-    },
-    [nodes]
+    (params) => setEdges((eds) => addEdge(params, eds)),
+    []
   );
 
   const onDragOver = useCallback((event) => {
@@ -73,28 +55,25 @@ const DnDFlow = () => {
   const onDrop = useCallback(
     (event) => {
       event.preventDefault();
+      if (!type) return;
 
-      // check if the dropped element is valid
-      if (!type) {
-        return;
-      }
-
-      // project was renamed to screenToFlowPosition
-      // and you don't need to subtract the reactFlowBounds.left/top anymore
-      // details: https://reactflow.dev/whats-new/2023-11-10
       const position = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
+
+      const nodeName = getDefaultName(type);
       const newNode = {
-        id: getId(),
+        id: nodeName,
         type,
         position,
-        data: { label: `${type} node` },
+        data: {
+          label: nodeName,
+          params: getDefaultParams(type),
+        },
       };
 
       setNodes((nds) => nds.concat(newNode));
-      console.log(nodeArray);
     },
     [screenToFlowPosition, type]
   );
@@ -102,7 +81,6 @@ const DnDFlow = () => {
   const handleExport = useCallback(() => {
     const currentConfig = composeConfig(nodes, edges);
     console.log("Exported Config:", JSON.stringify(currentConfig, null, 2));
-    // Add logic to save/download the config
   }, [nodes, edges]);
 
   return (
