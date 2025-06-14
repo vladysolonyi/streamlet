@@ -20,6 +20,8 @@ class DataCategory(Enum):
     USER_ACTIVITY = "user_activity"
     ENVIRONMENTAL = "environmental"
     SOCIAL = "social"
+    NETWORK = "network"
+    GENERIC = "generic"
 
 class LifecycleState(Enum):
     RAW = "raw"

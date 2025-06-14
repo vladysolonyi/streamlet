@@ -1,19 +1,28 @@
 import { createContext, useContext, useState } from "react";
 
-const DnDContext = createContext([null, (_) => {}]);
+const DnDContext = createContext({
+  type: null,
+  nodeTypes: {}, // Add nodeTypes to context
+  setType: () => {},
+  setNodeTypes: () => {},
+});
 
 export const DnDProvider = ({ children }) => {
   const [type, setType] = useState(null);
+  const [nodeTypes, setNodeTypes] = useState({}); // Initialize nodeTypes state
 
   return (
-    <DnDContext.Provider value={[type, setType]}>
+    <DnDContext.Provider
+      value={{
+        type,
+        setType,
+        nodeTypes, // Provide nodeTypes
+        setNodeTypes,
+      }}
+    >
       {children}
     </DnDContext.Provider>
   );
 };
 
-export default DnDContext;
-
-export const useDnD = () => {
-  return useContext(DnDContext);
-};
+export const useDnD = () => useContext(DnDContext);

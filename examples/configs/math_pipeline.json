@@ -2,23 +2,16 @@
   "nodes": [
     {
       "type": "number_generator",
+      "name": "numbers",
       "params": {
         "start": 2,
         "step": 3
-      },
-      "outputs": ["numbers"]
-    },
-    {
-      "type": "math_multiply",
-      "params": {
-        "multiplier": 1
-      },
-      "inputs": ["numbers"],
-      "outputs": ["processed"]
+      }
     },
     {
       "type": "console_logger",
-      "inputs": ["processed"]
+      "name": "Logger",
+      "inputs": ["numbers"]
     }
   ]
 }

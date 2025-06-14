@@ -5,9 +5,6 @@ from framework.data.data_types import *
 class NumberGenerator(BaseNode):
     node_type = "number_generator"
     IS_ACTIVE = True  # Actively generates data
-    accepted_data_types = {DataType.STREAM}
-    accepted_formats = {DataFormat.NUMERICAL}
-    accepted_categories = {DataCategory.ENVIRONMENTAL}
 
     class Params(BaseModel):
         current: int = 0
@@ -26,6 +23,9 @@ class NumberGenerator(BaseNode):
     def process(self):
         """Generate and publish DataPackets with metadata"""
         packet = self.create_packet(
+            data_type=DataType.STREAM,
+            format=DataFormat.NUMERICAL,
+            category=DataCategory.GENERIC,
             content=self.current,
             sequence_id=self.sequence_id,
             lifecycle_state=LifecycleState.RAW

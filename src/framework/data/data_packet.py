@@ -16,7 +16,6 @@ class DataPacket(BaseModel):
     content: Any
     timestamp: datetime = datetime.now()
     sequence_id: Optional[int] = None
-    coordinates: Optional[tuple] = None
     processing_chain: List[str] = Field(
         default_factory=list,
         description="Chain of node IDs that processed this data"

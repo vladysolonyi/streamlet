@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react"; // Add useState import
 import { useDnD } from "./DnDContext";
 
 const CATEGORY_CLASS_MAP = {
@@ -7,10 +7,9 @@ const CATEGORY_CLASS_MAP = {
 };
 
 const Sidebar = () => {
-  const [_, setType] = useDnD();
-  const [nodeTypes, setNodeTypes] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { setType, nodeTypes, setNodeTypes } = useDnD();
+  const [loading, setLoading] = useState(true); // Now using imported useState
+  const [error, setError] = useState(null); // Now using imported useState
 
   useEffect(() => {
     fetch("http://localhost:8000/node-types")
@@ -23,7 +22,7 @@ const Sidebar = () => {
         setError(err.message);
         setLoading(false);
       });
-  }, []);
+  }, [setNodeTypes]);
 
   const onDragStart = (event, nodeType) => {
     setType(nodeType);
@@ -41,9 +40,6 @@ const Sidebar = () => {
 
   return (
     <aside>
-      <div className="description">
-        You can drag these nodes to the pane on the right.
-      </div>
       {Object.entries(nodeTypes).map(([nodeType, data]) => (
         <div
           key={nodeType}

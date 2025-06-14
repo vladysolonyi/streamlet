@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState, useEffect } from "react";
+import React, { useRef, useCallback, useEffect } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -9,10 +9,13 @@ import {
   useReactFlow,
   Background,
 } from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
+//import "@xyflow/react/dist/style.css";
+import "@xyflow/react/dist/base.css";
 
+import { TelemetryProvider } from "./TelemetryContext";
+import NodeConfig from "./NodeConfig";
 import Sidebar from "./Sidebar";
-import config from "./math_pipeline.json";
+import config from "./ai_pipeline.json";
 import { parseConfig, composeConfig } from "./configUtils";
 import PipelineControls from "./PipelineControls";
 import { DnDProvider, useDnD } from "./DnDContext";
@@ -20,26 +23,36 @@ import { DnDProvider, useDnD } from "./DnDContext";
 const { initialNodes, initialEdges } = parseConfig(config);
 
 const DnDFlow = () => {
+  const { type, nodeTypes } = useDnD();
   const reactFlowWrapper = useRef(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { screenToFlowPosition } = useReactFlow();
-  const [type] = useDnD();
   const nodeCount = useRef(new Map());
 
-  const getDefaultName = (nodeType) => {
-    const count = nodeCount.current.get(nodeType) || 0;
-    nodeCount.current.set(nodeType, count + 1);
-    return `${nodeType}_${count + 1}`;
-  };
+  useEffect(() => {
+    if (Object.keys(nodeTypes).length > 0) {
+      const { initialNodes, initialEdges } = parseConfig(config, nodeTypes);
+      setNodes(initialNodes);
+      setEdges(initialEdges);
 
-  const getDefaultParams = (nodeType) => {
-    const defaults = {
-      number_generator: { current: 0, step: 1 },
-      math_multiply: { multiplier: 0 },
-      console_logger: {},
-    };
-    return defaults[nodeType] || {};
+      // Initialize node count based on loaded nodes
+      initialNodes.forEach((node) => {
+        const type = node.type;
+        const match = node.id.match(/_(\d+)$/);
+        const count = match ? parseInt(match[1]) : 0;
+        if (count > (nodeCount.current.get(type) || 0)) {
+          // Fixed line
+          nodeCount.current.set(type, count);
+        }
+      });
+    }
+  }, [nodeTypes, setNodes, setEdges]);
+
+  const getDefaultName = (nodeType) => {
+    const count = (nodeCount.current.get(nodeType) || 0) + 1;
+    nodeCount.current.set(nodeType, count);
+    return `${nodeType}_${count}`;
   };
 
   const onConnect = useCallback(
@@ -63,19 +76,28 @@ const DnDFlow = () => {
       });
 
       const nodeName = getDefaultName(type);
+      const nodeSchema = nodeTypes[type]?.params_schema;
+      const defaultParams = Object.fromEntries(
+        Object.entries(nodeSchema?.properties || {}).map(([key, def]) => [
+          key,
+          def.default,
+        ])
+      );
+
       const newNode = {
         id: nodeName,
-        type,
+        type: type, // Use actual type instead of 'custom'
         position,
         data: {
           label: nodeName,
-          params: getDefaultParams(type),
+          params: defaultParams,
+          paramsSchema: nodeSchema,
         },
       };
 
       setNodes((nds) => nds.concat(newNode));
     },
-    [screenToFlowPosition, type]
+    [screenToFlowPosition, type, nodeTypes]
   );
 
   const handleExport = useCallback(() => {
@@ -94,11 +116,17 @@ const DnDFlow = () => {
           onConnect={onConnect}
           onDrop={onDrop}
           onDragOver={onDragOver}
+          nodeTypes={
+            // Dynamically create node types from available nodeTypes
+            Object.keys(nodeTypes).reduce((acc, nodeType) => {
+              acc[nodeType] = NodeConfig;
+              return acc;
+            }, {})
+          }
           fitView
           style={{ backgroundColor: "#F7F9FB" }}
         >
           <Controls />
-          <Background />
         </ReactFlow>
       </div>
       <Sidebar />
@@ -115,8 +143,10 @@ const DnDFlow = () => {
 
 export default () => (
   <ReactFlowProvider>
-    <DnDProvider>
-      <DnDFlow />
-    </DnDProvider>
+    <TelemetryProvider>
+      <DnDProvider>
+        <DnDFlow />
+      </DnDProvider>
+    </TelemetryProvider>
   </ReactFlowProvider>
 );

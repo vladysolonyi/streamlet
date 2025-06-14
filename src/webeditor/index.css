@@ -1,4 +1,4 @@
-@import url('./xy-theme.css');
+@import url("./xy-theme.css");
 
 html,
 body {
@@ -59,6 +59,41 @@ body {
   margin-top: 10px;
 }
 
+.custom-node {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 10px;
+  width: 250px;
+}
+
+.node-header {
+  font-weight: bold;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.node-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.node-param label {
+  display: block;
+  font-size: 0.9em;
+  margin-bottom: 4px;
+  color: #666;
+}
+
+.node-input {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
 @media screen and (min-width: 768px) {
   .dndflow {
     flex-direction: row;
@@ -68,4 +103,105 @@ body {
     width: 20%;
     max-width: 250px;
   }
+}
+
+/* 1) The wrapper: gives us extra space for our “border” */
+.status-border-wrapper {
+  position: relative;
+  display: inline-block; /* shrink‑wrap to node width */
+  padding: 4px; /* space for the colored background */
+  border-radius: 8px;
+  /* make sure the pseudo sits under the node */
+  z-index: 0;
+}
+
+/* 2) The pseudo-element does the fade */
+.status-border-wrapper::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 3) Only when “active” do we run the animation */
+.status-border-wrapper.active::before {
+  animation-duration: 0.2s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+/* 4) GREEN fade */
+.status-border-wrapper.green.active::before {
+  background-color: rgba(0, 128, 0, 0.3); /* deep-ish green */
+  animation-name: fadeGreen;
+}
+
+/* 5) RED fade */
+.status-border-wrapper.red.active::before {
+  background-color: rgba(255, 0, 0, 0.3); /* mid red */
+  animation-name: fadeRed;
+}
+
+/* 6) YELLOW fade */
+.status-border-wrapper.yellow.active::before {
+  background-color: rgba(255, 255, 0, 0.3); /* bright yellow */
+  animation-name: fadeYellow;
+}
+
+/* 7) Shared fade keyframes */
+@keyframes fadeGreen {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes fadeRed {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes fadeYellow {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.react-flow__node {
+  overflow: visible !important;
+  border-radius: 0;
+  padding: 0;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.react-flow__node.selected {
+  overflow: visible !important;
+  border-radius: 0;
+  padding: 0;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.react-flow__node:hover {
+  overflow: visible !important;
+  border-radius: 0;
+  padding: 0;
+  border: none !important;
+  box-shadow: none !important;
 }

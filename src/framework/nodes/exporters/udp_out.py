@@ -26,9 +26,6 @@ class UDPOut(BaseNode):
 
     def on_data(self, packet: DataPacket):
         """Handle incoming DataPacket using BaseNode validation"""
-        if not self.validate_input(packet):
-            self.logger.warning(f"Rejected packet: {packet.data_type}|{packet.format}|{packet.category}")
-            return
 
         try:
             # Extract raw content from DataPacket

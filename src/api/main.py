@@ -1,6 +1,10 @@
 # api/main.py
-from fastapi import FastAPI, HTTPException, Security
+from fastapi import FastAPI, HTTPException, Security, WebSocket, WebSocketDisconnect
+import asyncio
+from contextlib import asynccontextmanager
+from framework.core.telemetry import telemetry
 from fastapi.security import APIKeyHeader
+import time
 from framework.core import Pipeline, NodeRegistry
 from framework.data.data_types import (
     DataType,
@@ -13,10 +17,26 @@ from framework.data.data_types import (
 from uuid import UUID, uuid4
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Union
+from typing import Union, AsyncGenerator
 import yaml
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    # Start telemetry broadcaster on startup
+    broadcaster_task = asyncio.create_task(telemetry._async_broadcaster())
+    
+    yield
+    
+    # Cleanup on shutdown
+    telemetry.stop()
+    broadcaster_task.cancel()
+    try:
+        await broadcaster_task
+    except asyncio.CancelledError:
+        pass
+    print("🛑 Telemetry broadcaster stopped")
+
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],  # Your frontend origin
@@ -24,6 +44,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 api_keys = ["SECRET_KEY"]  # In production, use proper auth
 security = APIKeyHeader(name="X-API-Key")
@@ -160,3 +181,36 @@ async def get_data_specification():
             SensitivityLevel.RESTRICTED.value: "Classified surveillance material"
         }
     }
+
+@app.websocket("/ws/telemetry")
+async def websocket_telemetry(websocket: WebSocket):
+    try:
+        # Accept connection only once here
+        await websocket.accept()
+        
+        # Send initial confirmation
+        await websocket.send_json({
+            "type": "connection_ack",
+            "status": "connected",
+            "server_time": time.time()
+        })
+        
+        # Add to telemetry system
+        await telemetry.add_connection(websocket)
+        
+        # Keep connection alive
+        while True:
+            await websocket.receive_text()
+            
+    except WebSocketDisconnect:
+        pass  # Normal client disconnect
+    except Exception as e:
+        print(f"WebSocket error: {str(e)}")
+    finally:
+        await telemetry.remove_connection(websocket)
+        try:
+            await websocket.close()
+        except RuntimeError:
+            pass
+
+

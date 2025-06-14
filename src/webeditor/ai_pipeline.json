@@ -1,0 +1,40 @@
+{
+  "nodes": [
+    {
+      "type": "udp_in",
+      "name": "KeyloggerExt",
+      "params": { "listen_port": 7000 }
+    },
+    {
+      "type": "data_accumulator",
+      "name": "AccumulateKeylogger",
+      "inputs": ["KeyloggerExt"],
+      "params": {
+        "max_chunk_size": 30,
+        "max_chunk_age": 5,
+        "output_format": "textual"
+      }
+    },
+    {
+      "type": "ai_agent",
+      "name": "BehaviorAnalyst",
+      "params": {
+        "api_key": "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",
+        "model": "deepseek-r1-distill-llama-70b",
+        "analysis_task": "Identify typing patterns and behavioral biometrics from keystroke data"
+      },
+      "inputs": ["AccumulateKeylogger"]
+    },
+    {
+      "type": "console_logger",
+      "name": "Logger",
+      "inputs": ["BehaviorAnalyst"]
+    },
+    {
+      "type": "udp_out",
+      "name": "tdout",
+      "params": { "ip": "127.0.0.1", "port": 9000 },
+      "inputs": ["BehaviorAnalyst"]
+    }
+  ]
+}
