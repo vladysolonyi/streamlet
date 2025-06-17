@@ -7,6 +7,7 @@ import FlowBoard from "./features/flow-board/components/FlowBoard";
 import PipelineControls from "./features/pipeline-controls/PipelineControls";
 import PropertiesPanel from "./features/properties-panel/PropertiesPanel"; // New component
 import "./assets/index.css";
+import "./assets/node.css";
 import "./assets/xy-theme.css";
 import "./assets/reset.css";
 

@@ -47,6 +47,7 @@ class BaseNode(metaclass=NodeMeta):
     Params: Type[BaseModel] = None  # Define per-node
     IS_ACTIVE = False  # Default to passive node
     
+    
     def __init__(self, config):
         self.node_id = f"{self.node_type}_{uuid.uuid4().hex[:6]}" 
         self.config = config
@@ -56,16 +57,20 @@ class BaseNode(metaclass=NodeMeta):
         self.outputs = config.get('outputs', [])
         self.logger = logging.getLogger(self.node_type)
         self.telemetry = telemetry
+        self.last_processed = time.time()  # Track processing time
 
     # In BaseNode class
     def emit_telemetry(self, metric: str, value: Any):
-        """Synchronous telemetry emission"""
-        self.telemetry.broadcast_sync({
-            "node_id": self.name,
-            "metric": metric,
-            "value": value,
-            "timestamp": time.time()
-        })
+        """Non-blocking telemetry emission"""
+        try:
+            self.telemetry.broadcast_sync({
+                "node_id": self.name,
+                "metric": metric,
+                "value": value,
+                "timestamp": time.time()
+            })
+        except Exception as e:
+            self.logger.error(f"Telemetry error: {str(e)}")
 
     @classmethod
     def get_param_schema(cls):

@@ -8,6 +8,7 @@ const Node = ({ id, data, selected }) => {
 
   useEffect(() => {
     if (nodeActivity[id]) {
+      console.log("Node activity:", nodeActivity[id]);
       setIsActive(true);
       const timer = setTimeout(() => setIsActive(false), 250);
       return () => clearTimeout(timer);

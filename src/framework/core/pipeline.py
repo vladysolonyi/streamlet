@@ -1,3 +1,4 @@
+
 import logging
 from pathlib import Path
 from .data_bus import DataBus
@@ -13,10 +14,10 @@ class Pipeline:
         self._running = threading.Event()
         self._thread = None
         self.nodes = []
-        self.data_bus = DataBus()
+        self.data_bus = DataBus(max_workers=20)  # Increased workers
         self.config = self._load_config(config_source)
         self.logger = logging.getLogger('pipeline')
-        self.node_map = {}  # Maps node names to instances
+        self.node_map = {}
 
     def _load_config(self, source: Union[str, Dict]) -> Dict:
         """Load config from file path or dict"""
@@ -102,23 +103,34 @@ class Pipeline:
         self._thread.start()
 
     def _run_loop(self):
-        """Main processing loop for background execution"""
-        self.logger.info("Starting pipeline execution")
-        try:
-            while self._running.is_set():
-                for node in self.nodes:
-                    if node.should_process():
-                        node.process()
-                time.sleep(0.001)  # Prevent CPU hogging
-        except Exception as e:
-            self.logger.error(f"Pipeline failed: {str(e)}")
-        finally:
-            self.shutdown()
+            """Main processing loop for background execution"""
+            self.logger.info("Starting pipeline execution")
+            try:
+                while self._running.is_set():
+                    # Process active nodes only
+                    for node in self.nodes:
+                        if node.should_process() and not node.IS_ASYNC_CAPABLE:
+                            node.process()
+                    time.sleep(0.001)  # Prevent CPU hogging
+            except Exception as e:
+                self.logger.error(f"Pipeline failed: {str(e)}")
+            finally:
+                self.shutdown()
 
-    def shutdown(self):
+def shutdown(self):
         """Safe thread termination with ownership check"""
         if self._running.is_set():
             self._running.clear()
             if self._thread is not None and self._thread is not threading.current_thread():
                 self._thread.join(timeout=5)
             self._thread = None
+        
+        # Clean up all nodes and databus
+        for node in self.nodes:
+            try:
+                if hasattr(node, 'cleanup'):
+                    node.cleanup()
+            except Exception as e:
+                self.logger.error(f"Error cleaning up {node.name}: {str(e)}")
+                
+        self.data_bus.shutdown()  # Proper thread pool cleanup

@@ -26,15 +26,24 @@
       "inputs": ["AccumulateKeylogger"]
     },
     {
+      "name": "packet_delayer",
+      "type": "delay",
+      "inputs": ["BehaviorAnalyst"],
+      "params": {
+        "delay_ms": 1500,
+        "max_queue_size": 500
+      }
+    },
+    {
       "type": "console_logger",
       "name": "Logger",
-      "inputs": ["BehaviorAnalyst"]
+      "inputs": ["packet_delayer"]
     },
     {
       "type": "udp_out",
       "name": "tdout",
       "params": { "ip": "127.0.0.1", "port": 9000 },
-      "inputs": ["BehaviorAnalyst"]
+      "inputs": ["packet_delayer"]
     }
   ]
 }

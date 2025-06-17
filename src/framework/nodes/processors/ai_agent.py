@@ -24,6 +24,8 @@ class AIAgentNode(BaseNode):
                                   description="Specific analysis objective")
         output_format: str = Field(default="json", 
                                   description="Requested output format from LLM")
+        timeout: float = Field(default=10.0, description="API timeout in seconds")
+
 
     BASE_PROMPT = """Analyze this typing data for patterns:
     
@@ -33,6 +35,7 @@ class AIAgentNode(BaseNode):
         "activity": 
         "description": 
     }"""
+    
 
     def __init__(self, config):
         super().__init__(config)
@@ -67,12 +70,13 @@ class AIAgentNode(BaseNode):
                 model=self.params.model,
                 temperature=self.params.temperature,
                 max_tokens=self.params.max_tokens,
-                response_format={"type": "json_object"} if self.params.output_format == "json" else None
+                response_format={"type": "json_object"} if self.params.output_format == "json" else None,
+                timeout=self.params.timeout  # Add timeout
             )
             return self._parse_response(response.choices[0].message.content)
         except Exception as e:
             self.logger.error(f"Groq API error: {str(e)}")
-            raise
+            return {"error": str(e)}  # Return error instead of raising
 
     def _build_prompt(self, packet: DataPacket) -> str:
         """Construct analysis prompt from template"""
