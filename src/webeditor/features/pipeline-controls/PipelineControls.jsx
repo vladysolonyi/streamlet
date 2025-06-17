@@ -8,32 +8,44 @@ const PipelineControls = ({ config }) => {
   const [pipelineId, setPipelineId] = useState(null);
   const [pipelineStatus, setPipelineStatus] = useState("not created");
   const [error, setError] = useState(null);
-  const { updateNodeActivity } = useTelemetry();
+  const { updateTelemetry } = useTelemetry();
 
   useEffect(() => {
     if (!pipelineId) return;
 
-    // Connect to WebSocket
     webSocketService.connect(pipelineId);
 
-    // Add telemetry listener
+    // Add listener for WebSocket messages
     const removeListener = webSocketService.addListener((data) => {
-      // Check if this is a telemetry message
-      if (data.node_id && data.metric && data.value !== undefined) {
-        updateNodeActivity(data.node_id);
-      }
-      // Check if this is a connection acknowledgement
-      else if (data.status === "connection_ack") {
-        console.log("Server connection confirmed. Status:", data.status);
+      // Handle different telemetry metrics
+      switch (data.metric) {
+        case "processing_start":
+          updateTelemetry(data.node_id, "processing_start");
+          break;
+        case "processing_end":
+          updateTelemetry(data.node_id, "processing_end");
+          break;
+        case "processing_error":
+          updateTelemetry(data.node_id, "processing_error", {
+            message: data.value || "Error occurred",
+          });
+          break;
+        case "data_rejected":
+          updateTelemetry(data.node_id, "data_rejected", {
+            count: data.value || 1,
+          });
+          break;
+        default:
+          // Ignore other metrics like execution_time
+          break;
       }
     });
 
-    // Cleanup on unmount
     return () => {
       removeListener();
       webSocketService.disconnect();
     };
-  }, [pipelineId, updateNodeActivity]);
+  }, [pipelineId, updateTelemetry]);
 
   const handleInitialize = async () => {
     try {

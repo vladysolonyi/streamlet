@@ -20,7 +20,10 @@ class WebSocketService {
     this.socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        this.listeners.forEach((callback) => callback(data));
+        // Notify all listeners
+        this.listeners.forEach((listener) => {
+          listener(data);
+        });
       } catch (err) {
         console.error("Error parsing message:", err, "Raw data:", event.data);
       }
@@ -43,8 +46,13 @@ class WebSocketService {
   }
 
   addListener(callback) {
+    // Add the callback to the listeners
     this.listeners.add(callback);
-    return () => this.listeners.delete(callback);
+
+    // Return a function to remove this callback
+    return () => {
+      this.listeners.delete(callback);
+    };
   }
 
   send(message) {

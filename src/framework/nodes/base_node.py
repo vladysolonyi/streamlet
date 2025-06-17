@@ -6,6 +6,7 @@ from framework.core.telemetry import telemetry
 import uuid
 import logging
 import time
+import functools
 
 
 class NodeMeta(ABCMeta):
@@ -14,20 +15,40 @@ class NodeMeta(ABCMeta):
             if method_name in namespace:
                 original_method = namespace[method_name]
                 
-                # Sync-compatible wrapper
+                # Enhanced wrapper with start/end telemetry
                 def wrapped(self, *args, 
                            __original_method=original_method,
                            __method_name=method_name,
                            **kwargs):
-                    start = time.perf_counter()
-                    result = __original_method(self, *args, **kwargs)  # Sync execution
-                    duration = time.perf_counter() - start
-                    
-                    # Sync telemetry call
+                    # Emit processing start telemetry
                     self.emit_telemetry(
-                        metric="execution_time",
-                        value=duration
+                        metric="processing_start",
+                        value=time.time()
                     )
+                    
+                    start = time.perf_counter()
+                    try:
+                        result = __original_method(self, *args, **kwargs)
+                    except Exception as e:
+                        # Emit error telemetry
+                        self.emit_telemetry(
+                            metric="processing_error",
+                            value=str(e)
+                        )
+                        raise
+                    finally:
+                        # Always emit end telemetry
+                        duration = time.perf_counter() - start
+                        self.emit_telemetry(
+                            metric="processing_end",
+                            value=time.time()
+                        )
+                        # Keep execution time telemetry
+                        self.emit_telemetry(
+                            metric="execution_time",
+                            value=duration
+                        )
+                    
                     return result
                 
                 namespace[method_name] = wrapped
@@ -58,6 +79,8 @@ class BaseNode(metaclass=NodeMeta):
         self.logger = logging.getLogger(self.node_type)
         self.telemetry = telemetry
         self.last_processed = time.time()  # Track processing time
+        self.rejected_count = 0  # Track rejected packets
+        self.processed_count = 0  # Track processed packets
 
     # In BaseNode class
     def emit_telemetry(self, metric: str, value: Any):
@@ -85,9 +108,51 @@ class BaseNode(metaclass=NodeMeta):
         pass
 
     def validate_input(self, packet: DataPacket) -> bool:
-        """Check if node can process this data type"""
-        return (packet.data_type in self.accepted_data_types and
-                packet.format in self.accepted_formats)
+        """Check if node can process this data type with telemetry"""
+        is_valid = (
+            packet.data_type in self.accepted_data_types and
+            packet.format in self.accepted_formats and
+            packet.category in self.accepted_categories
+        )
+        
+        if not is_valid:
+            self.log_rejection(packet)
+            self.rejected_count += 1
+            self.emit_telemetry(
+                metric="data_rejected",
+                value={
+                    "reason": "incompatible_data",
+                    "data_type": str(packet.data_type),
+                    "format": str(packet.format),
+                    "category": str(packet.category),
+                    "current_rejected": self.rejected_count
+                }
+            )
+        
+        return is_valid
+
+    def log_rejection(self, packet: DataPacket):
+        """Log detailed rejection reasons"""
+        rejection_reasons = []
+        
+        if packet.data_type not in self.accepted_data_types:
+            rejection_reasons.append(
+                f"data_type {packet.data_type} not in {self.accepted_data_types}"
+            )
+            
+        if packet.format not in self.accepted_formats:
+            rejection_reasons.append(
+                f"format {packet.format} not in {self.accepted_formats}"
+            )
+            
+        if packet.category not in self.accepted_categories:
+            rejection_reasons.append(
+                f"category {packet.category} not in {self.accepted_categories}"
+            )
+            
+        self.logger.warning(
+            f"Rejected packet: {', '.join(rejection_reasons)}"
+        )
         
     def process(self):
         """Main processing method (override in processors)"""
