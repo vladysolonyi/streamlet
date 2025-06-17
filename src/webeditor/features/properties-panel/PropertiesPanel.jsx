@@ -1,34 +1,26 @@
-import React, { useEffect, useState } from "react";
-import { Handle, useReactFlow } from "@xyflow/react";
-import { useTelemetry } from "./TelemetryContext"; // Adjust import path as needed
+import React from "react";
+import { useReactFlow } from "@xyflow/react";
 
-const NodeConfig = ({ id, data, selected }) => {
-  const { setNodes } = useReactFlow();
-  const { nodeActivity } = useTelemetry();
-  const [isActive, setIsActive] = useState(false);
+const PropertiesPanel = () => {
+  const { getNodes } = useReactFlow();
+  const selectedNode = getNodes().find((node) => node.selected);
 
-  // Add safe navigation for schema properties
+  if (!selectedNode) {
+    return (
+      <div className="properties-panel">
+        <div className="no-selection">Select a node to edit its properties</div>
+      </div>
+    );
+  }
+
+  const { data } = selectedNode;
   const schema = data.paramsSchema || {};
   const properties = schema.properties || {};
-  console.log(
-    "Node ID:",
-    id,
-    "Telemetry ID:",
-    nodeActivity[id] ? id : "no match"
-  );
-  // Handle telemetry updates
-  useEffect(() => {
-    if (nodeActivity[id]) {
-      setIsActive(true);
-      const timer = setTimeout(() => setIsActive(false), 250);
-      return () => clearTimeout(timer);
-    }
-  }, [nodeActivity[id]]);
 
   const handleChange = (prop, value) => {
-    setNodes((nodes) =>
+    useReactFlow().setNodes((nodes) =>
       nodes.map((node) => {
-        if (node.id === id) {
+        if (node.id === selectedNode.id) {
           return {
             ...node,
             data: {
@@ -46,13 +38,12 @@ const NodeConfig = ({ id, data, selected }) => {
   };
 
   const renderInput = (prop, definition) => {
-    // Add null checks for definition
     if (!definition) return null;
 
     const inputProps = {
       value: data.params[prop] ?? definition?.default,
       onChange: (e) => handleChange(prop, e.target.value),
-      className: "node-input",
+      className: "property-input",
       placeholder: definition?.description || "",
     };
 
@@ -78,13 +69,13 @@ const NodeConfig = ({ id, data, selected }) => {
         );
       case "boolean":
         return (
-          <label>
+          <label className="property-checkbox">
             <input
               type="checkbox"
               checked={data.params[prop] ?? definition.default}
               onChange={(e) => handleChange(prop, e.target.checked)}
             />
-            {definition.title}
+            <span>{definition.title}</span>
           </label>
         );
       case "string":
@@ -106,37 +97,35 @@ const NodeConfig = ({ id, data, selected }) => {
   };
 
   return (
-    <div
-      // ${colorClass}
-      className={`
-    status-border-wrapper
-    ${isActive ? "active" : ""}
-    ${selected ? "selected" : ""}
-    green            /*   "green" | "red" | "yellow" */
-  `}
-    >
-      <div
-        className={`custom-node ${selected ? "selected" : ""}`}
-        style={{ position: "relative" }}
-      >
-        <Handle type="target" position="top" />
-        <div className="node-header">{data.label}</div>
-        <div className="node-body">
-          {Object.keys(properties).length > 0 ? (
-            Object.entries(properties).map(([prop, definition]) => (
-              <div key={prop} className="node-param">
-                <label>{definition?.title || prop}</label>
+    <div className="properties-panel">
+      <div className="panel-header">
+        <h3>{data.label}</h3>
+        <div className="node-type">{selectedNode.type}</div>
+      </div>
+
+      <div className="panel-body">
+        {Object.keys(properties).length > 0 ? (
+          Object.entries(properties).map(([prop, definition]) => (
+            <div key={prop} className="property-group">
+              <label className="property-label">
+                {definition?.title || prop}
+              </label>
+              <div className="property-input-container">
                 {renderInput(prop, definition)}
               </div>
-            ))
-          ) : (
-            <div className="no-params">No parameters available</div>
-          )}
-        </div>
-        <Handle type="source" position="bottom" />
+              {definition.description && (
+                <div className="property-description">
+                  {definition.description}
+                </div>
+              )}
+            </div>
+          ))
+        ) : (
+          <div className="no-params">No configurable properties</div>
+        )}
       </div>
     </div>
   );
 };
 
-export default NodeConfig;
+export default PropertiesPanel;

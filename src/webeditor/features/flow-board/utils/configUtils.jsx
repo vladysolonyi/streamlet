@@ -1,8 +1,34 @@
 import { v4 as uuid } from "uuid";
 
+export const validateConfig = (config) => {
+  if (!config || typeof config !== "object") {
+    throw new Error("Invalid config format: must be an object");
+  }
+
+  if (!Array.isArray(config.nodes)) {
+    throw new Error("Config must contain a nodes array");
+  }
+
+  const names = new Set();
+  for (const node of config.nodes) {
+    if (!node.type || typeof node.type !== "string") {
+      throw new Error(`Node missing type property: ${JSON.stringify(node)}`);
+    }
+    if (!node.name || typeof node.name !== "string") {
+      throw new Error(`Node missing name property: ${JSON.stringify(node)}`);
+    }
+    if (names.has(node.name)) {
+      throw new Error(`Duplicate node name: ${node.name}`);
+    }
+    names.add(node.name);
+  }
+
+  return true;
+};
+
 export const parseConfig = (config, nodeTypes = {}) => {
-  // Add default parameter
-  // Validate all nodes have unique names
+  validateConfig(config);
+
   const names = new Set();
   config.nodes.forEach((node) => {
     if (names.has(node.name)) {
@@ -12,8 +38,7 @@ export const parseConfig = (config, nodeTypes = {}) => {
   });
 
   const initialNodes = config.nodes.map((node, index) => {
-    const nodeSchema = nodeTypes[node.type]?.params_schema || {}; // Safe access
-
+    const nodeSchema = nodeTypes[node.type]?.params_schema || {};
     return {
       id: node.name,
       type: node.type,
@@ -25,7 +50,7 @@ export const parseConfig = (config, nodeTypes = {}) => {
             Object.entries(nodeSchema.properties || {}).map(([key, def]) => [
               key,
               def?.default,
-            ]) // Added safe navigation
+            ])
           ),
           ...(node.params || {}),
         },
@@ -48,7 +73,6 @@ export const parseConfig = (config, nodeTypes = {}) => {
   return { initialNodes, initialEdges };
 };
 
-// composeConfig remains the same
 export const composeConfig = (nodes, edges) => ({
   nodes: nodes.map((node) => ({
     type: node.type,
