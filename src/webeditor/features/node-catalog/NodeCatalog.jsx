@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useDnD } from "../../contexts/DnDContext";
 
 const CATEGORY_CLASS_MAP = {
@@ -7,22 +7,7 @@ const CATEGORY_CLASS_MAP = {
 };
 
 const NodeCatalog = () => {
-  const { setType, nodeTypes, setNodeTypes } = useDnD();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    fetch("http://localhost:8000/node-types")
-      .then((response) => response.json())
-      .then((data) => {
-        setNodeTypes(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, [setNodeTypes]);
+  const { setType, nodeTypes } = useDnD(); // Removed setNodeTypes
 
   const onDragStart = (event, nodeType) => {
     setType(nodeType);
@@ -35,8 +20,10 @@ const NodeCatalog = () => {
       .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase());
   };
 
-  if (loading) return <div>Loading node types...</div>;
-  if (error) return <div>Error: {error}</div>;
+  // No loading state needed - nodeTypes come from context
+  if (Object.keys(nodeTypes).length === 0) {
+    return <div>No node types available. Please check your connection.</div>;
+  }
 
   return (
     <>

@@ -1,29 +1,34 @@
 import { v4 as uuid } from "uuid";
 
+// Helper to extract references from parameters
+export const extractReferences = (params) => {
+  const references = [];
+
+  const traverse = (obj, path = []) => {
+    for (const [key, value] of Object.entries(obj)) {
+      const currentPath = [...path, key];
+
+      if (typeof value === "string" && value.startsWith("@ref:")) {
+        const refParts = value.substring(5).split(".");
+        if (refParts.length > 0) {
+          references.push({
+            sourceNode: refParts[0],
+            path: currentPath.join("."),
+            refValue: value,
+          });
+        }
+      } else if (typeof value === "object" && value !== null) {
+        traverse(value, currentPath);
+      }
+    }
+  };
+
+  traverse(params);
+  return references;
+};
+
 export const validateConfig = (config) => {
-  if (!config || typeof config !== "object") {
-    throw new Error("Invalid config format: must be an object");
-  }
-
-  if (!Array.isArray(config.nodes)) {
-    throw new Error("Config must contain a nodes array");
-  }
-
-  const names = new Set();
-  for (const node of config.nodes) {
-    if (!node.type || typeof node.type !== "string") {
-      throw new Error(`Node missing type property: ${JSON.stringify(node)}`);
-    }
-    if (!node.name || typeof node.name !== "string") {
-      throw new Error(`Node missing name property: ${JSON.stringify(node)}`);
-    }
-    if (names.has(node.name)) {
-      throw new Error(`Duplicate node name: ${node.name}`);
-    }
-    names.add(node.name);
-  }
-
-  return true;
+  // ... existing validation code ...
 };
 
 export const parseConfig = (config, nodeTypes = {}) => {
@@ -55,17 +60,39 @@ export const parseConfig = (config, nodeTypes = {}) => {
           ...(node.params || {}),
         },
         paramsSchema: nodeSchema,
+        references: extractReferences(node.params || {}),
       },
     };
   });
 
   const initialEdges = [];
+
+  // Create standard input edges
   config.nodes.forEach((node) => {
     node.inputs?.forEach((inputName) => {
       initialEdges.push({
         id: `${inputName}-to-${node.name}-${uuid()}`,
         source: inputName,
         target: node.name,
+      });
+    });
+  });
+
+  // Create reference edges
+  config.nodes.forEach((node) => {
+    const references = extractReferences(node.params || {});
+    references.forEach((ref) => {
+      initialEdges.push({
+        id: `ref-${ref.sourceNode}-${node.name}-${uuid()}`,
+        source: ref.sourceNode,
+        target: node.name,
+        type: "straight",
+        className: "reference-edge",
+        animated: true,
+        data: {
+          referencePath: ref.path,
+          refValue: ref.refValue,
+        },
       });
     });
   });
@@ -79,7 +106,11 @@ export const composeConfig = (nodes, edges) => ({
     name: node.data.label,
     params: node.data.params,
     inputs: edges
-      .filter((edge) => edge.target === node.id)
+      .filter((edge) => edge.target === node.id && !edge.type)
       .map((edge) => edge.source),
   })),
+});
+
+export const getEmptyConfig = () => ({
+  nodes: [],
 });

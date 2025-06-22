@@ -1,37 +1,41 @@
-from framework.nodes import BaseNode
+# nodes/processors/math_multiply.py
+from framework.nodes.base_node import BaseNode
 from pydantic import BaseModel
 from framework.data.data_packet import DataPacket
 from framework.data.data_types import *
 
-class MathNode(BaseNode):
+class MathMultiplyNode(BaseNode):
     node_type = "math_multiply"
-    accepted_data_types = {DataType.STREAM, DataType.DERIVED}
+    accepted_data_types = {DataType.STREAM, DataType.DERIVED, DataType.STATIC}
     accepted_formats = {DataFormat.NUMERICAL}
-    accepted_categories = {DataCategory.ENVIRONMENTAL, DataCategory.GEOSPATIAL}
+    accepted_categories = set(DataCategory)
+    
+    # Input configuration (defaults to single input)
+    # MIN_INPUTS = 1 (default)
+    # MAX_INPUTS = 1 (default)
 
     class Params(BaseModel):
         multiplier: int = 1
 
-    def __init__(self, config):
-        super().__init__(config)
-        self.params = self.Params(**config.get('params', {}))
-        self.multiplier = self.params.multiplier
-        
-    def on_data(self, packet: DataPacket):
-        """Process validated DataPackets"""
-        if not self.validate_input(packet):
-            self.logger.warning(f"Rejected incompatible packet: {packet}")
+    def process(self):
+        """Process single input"""
+        if not self.input_buffers[self.inputs[0]]:
             return
-
+            
+        packet = self.input_buffers[self.inputs[0]][0]
+        
         try:
-            result = packet.content * self.multiplier
+            result = packet.content * self.params.multiplier
             
             # Create new packet with processing metadata
             new_packet = self.modify_packet(packet, result)
-            self.data_bus.publish(self.outputs[0], new_packet)
-        except TypeError as e:
-            self.logger.error(f"Invalid data type for math operation: {str(e)}")
+            
+            # Publish to all outputs
+            for output_channel in self.outputs:
+                self.data_bus.publish(output_channel, new_packet)
+                
         except Exception as e:
-            self.logger.error(f"Processing failed: {str(e)}")
+            self.logger.error(f"Multiplication failed: {str(e)}")
 
-NODE_CLASSES = [MathNode]
+# Register the node
+NODE_CLASSES = [MathMultiplyNode]

@@ -1,0 +1,23 @@
+{
+  "nodes": [
+    {
+      "type": "number_generator",
+      "name": "number_generator_1",
+      "params": {
+        "current": 0,
+        "step": 1
+      },
+      "inputs": []
+    },
+    {
+      "type": "console_logger",
+      "name": "console_logger_1",
+      "params": {
+        "prefix": "@ref:number_generator_1.content"
+      },
+      "inputs": [
+        "number_generator_1"
+      ]
+    }
+  ]
+}

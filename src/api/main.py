@@ -5,7 +5,9 @@ from contextlib import asynccontextmanager
 from framework.core.telemetry import telemetry
 from fastapi.security import APIKeyHeader
 import time
-from framework.core import Pipeline, NodeRegistry
+from framework.core import Pipeline, NodeRegistry, PipelineManager
+manager = PipelineManager()
+
 from framework.data.data_types import (
     DataType,
     DataFormat, 
@@ -54,54 +56,65 @@ pipelines = {}
 
 class PipelineConfig(BaseModel):
     config: Union[str, dict]  # Accept both path and direct config
-    name: str
+    name: str = "Unnamed Pipeline"
 
 class NodeUpdate(BaseModel):
     node_id: str
     params: dict
 
 # --- Core Endpoints ---
-@app.post("/pipelines", status_code=201)
-async def create_pipeline(config: PipelineConfig):
-    try:
-        # Handle both config formats
-        if isinstance(config.config, str):
-            pipeline = Pipeline(config.config)
-        else:
-            pipeline = Pipeline(config.config)
-            
-        pipeline.build()
-        pipeline_id = uuid4()
-        pipelines[pipeline_id] = {
-            "instance": pipeline,
-            "status": "stopped",
-            "name": config.name
-        }
-        return {"id": str(pipeline_id), "status": "created"}
-    except Exception as e:
-        raise HTTPException(400, f"Pipeline creation failed: {str(e)} {config}")
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+@app.post("/pipelines")
+def create_pipeline(config: PipelineConfig):
+    pipeline_id = manager.create_pipeline(config.config)
+    return {"pipeline_id": pipeline_id}
 
 @app.post("/pipelines/{pipeline_id}/start")
-async def start_pipeline(pipeline_id: UUID):
-    """Start pipeline in background"""
-    pipeline = _get_pipeline(pipeline_id)
-    try:
-        pipeline["instance"].run()
-        pipeline["status"] = "running"
-        return {"status": "running"}
-    except Exception as e:
-        raise HTTPException(500, f"Start failed: {str(e)}")
+def start_pipeline(pipeline_id: str):
+    pipeline = manager.get_pipeline(pipeline_id)
+    if not pipeline:
+        raise HTTPException(status_code=404, detail="Pipeline not found")
+    pipeline.run()
+    return {"status": "started"}
 
 @app.post("/pipelines/{pipeline_id}/stop")
-async def stop_pipeline(pipeline_id: UUID):
-    """Stop pipeline execution"""
-    pipeline = _get_pipeline(pipeline_id)
+def stop_pipeline(pipeline_id: str):
+    pipeline = manager.get_pipeline(pipeline_id)
+    if not pipeline:
+        raise HTTPException(status_code=404, detail="Pipeline not found")
+    
     try:
-        pipeline["instance"].shutdown()
-        pipeline["status"] = "stopped"
+        pipeline.shutdown()
         return {"status": "stopped"}
     except Exception as e:
-        raise HTTPException(500, f"Stop failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to stop pipeline: {str(e)}"
+        )
+
+@app.delete("/pipelines/{pipeline_id}")
+def delete_pipeline(pipeline_id: str):
+    if not manager.delete_pipeline(pipeline_id):
+        raise HTTPException(status_code=404, detail="Pipeline not found")
+    return {"status": "deleted"}
+
+@app.put("/pipelines/{pipeline_id}/config")
+def update_pipeline_config(pipeline_id: str, config: PipelineConfig):
+    if not manager.update_pipeline_config(pipeline_id, config.config):
+        raise HTTPException(status_code=404, detail="Pipeline not found or update failed")
+    return {"status": "updated"}
+
+@app.patch("/pipelines/{pipeline_id}/nodes/{node_id}")
+def update_node_params(pipeline_id: str, node_id: str, update: NodeUpdate):
+    pipeline = manager.get_pipeline(pipeline_id)
+    if not pipeline:
+        raise HTTPException(status_code=404, detail="Pipeline not found")
+    if not pipeline.update_node_params(node_id, update.params):
+        raise HTTPException(status_code=400, detail="Invalid parameters")
+    return {"status": "updated"}
 
 # --- Configuration Endpoints ---
 @app.patch("/pipelines/{pipeline_id}/nodes")

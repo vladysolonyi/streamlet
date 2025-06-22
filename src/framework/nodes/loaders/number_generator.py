@@ -5,6 +5,8 @@ from framework.data.data_types import *
 class NumberGenerator(BaseNode):
     node_type = "number_generator"
     IS_ACTIVE = True  # Actively generates data
+    MIN_INPUTS = 0
+    IS_ASYNC_CAPABLE = False  # Add this line
 
     class Params(BaseModel):
         current: int = 0

@@ -1,23 +1,65 @@
 import logging
 from framework.core import Pipeline
+from framework.core.pipeline_manager import PipelineManager
+import time
 
-# Configure logging - Add this at the start of your script
+# Configure logging
 logging.basicConfig(
-    level=logging.DEBUG,  # Set to DEBUG to see all messages
+    level=logging.DEBUG,  # Set to DEBUG for detailed output
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),  # Output to terminal
     ]
 )
 
-# Now create and run your pipeline
-pipeline = Pipeline("configs/keylogger_llm_analyze.json")
-pipeline.build()
+# Create manager instance
+manager = PipelineManager()
 
-try:
-    pipeline.run()  # Start the pipeline
-    input("Press Enter to stop...")  # Keep running until user stops
-except KeyboardInterrupt:
-    pass
-finally:
-    pipeline.shutdown()  # Ensure clean shutdown
+# Create initial pipeline
+config = "configs/math_pipeline.json"  # Or use a dict config
+pipeline_id = manager.create_pipeline(config)
+print(f"Created pipeline with ID: {pipeline_id}")
+
+# Get the pipeline instance from manager
+pipeline = manager.get_pipeline(pipeline_id)
+
+# Start the pipeline
+pipeline.run()
+print("Pipeline started")
+
+# New config to test
+config_new = {
+    "nodes": [
+        {
+            "type": "number_generator",
+            "name": "numbers",
+            "params": {
+                "start": 2,
+                "step": 3
+            }
+        },
+        {
+            "type": "console_logger",
+            "name": "Logger",
+            "inputs": ["numbers"],
+            "params": {
+                "prefix": "[LOL]"
+            }
+        }
+    ]
+}
+
+# Update pipeline configuration
+print("\n=== Updating pipeline configuration ===")
+success = manager.update_pipeline_config(pipeline_id, config_new)
+print(f"Update successful: {success}")
+
+# Let it run for a bit
+print("Pipeline running with new config...")
+time.sleep(3)
+
+# Stop and clean up
+print("\nStopping pipeline...")
+pipeline.shutdown()
+manager.delete_pipeline(pipeline_id)
+print("Cleanup complete")

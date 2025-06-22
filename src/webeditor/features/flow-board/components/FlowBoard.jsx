@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect } from "react";
+import React, { useRef, useCallback, useEffect, useState } from "react";
 import {
   ReactFlow,
   addEdge,
@@ -11,11 +11,20 @@ import {
 } from "@xyflow/react";
 import Node from "./Node";
 import { useDnD } from "../../../contexts/DnDContext";
-import { parseConfig, composeConfig } from "../utils/configUtils";
-import config from "../../../configs/ai_pipeline.json";
+import { usePipeline } from "../../../contexts/PipelineContext";
+import { useServerStatus } from "../../../contexts/ServerStatusContext"; // Add this
+
+import {
+  parseConfig,
+  composeConfig,
+  getEmptyConfig,
+} from "../utils/configUtils";
 import "@xyflow/react/dist/base.css";
+import { ReferenceEdge, DefaultEdge } from "./Edge";
+import { useReferenceMonitor } from "../hooks/useReferenceMonitor";
 
 const AUTOSAVE_KEY = "pipeline_autosave";
+const NODE_TYPES_KEY = "nodeTypes";
 
 const FlowBoard = ({ onConfigChange }) => {
   const { type, nodeTypes } = useDnD();
@@ -24,6 +33,16 @@ const FlowBoard = ({ onConfigChange }) => {
   // Use the standard hook for nodes and edges state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const { pipelineStatus, setHasChanges } = usePipeline();
+  // Define edge types
+  const edgeTypes = useRef({
+    default: DefaultEdge,
+    straight: ReferenceEdge,
+  }).current;
+  useReferenceMonitor(nodes, setEdges);
+
+  const { serverOnline } = useServerStatus(); // Add this
+  const [initialized, setInitialized] = useState(false); // Track initialization status
 
   const { screenToFlowPosition } = useReactFlow();
   const nodeCount = useRef(new Map());
@@ -38,57 +57,63 @@ const FlowBoard = ({ onConfigChange }) => {
     [setNodes]
   );
 
-  // Initialize with default config or saved config
+  // Initialize with saved config
   useEffect(() => {
-    if (Object.keys(nodeTypes).length > 0) {
-      // Check for saved config in localStorage
-      const savedConfig = localStorage.getItem(AUTOSAVE_KEY);
-      let configToLoad = config;
+    const savedConfig = localStorage.getItem(AUTOSAVE_KEY);
+    let configToLoad = getEmptyConfig();
 
-      if (savedConfig) {
-        try {
-          configToLoad = JSON.parse(savedConfig);
-          console.log("Loaded saved config from localStorage");
-        } catch (error) {
-          console.error("Error loading saved config:", error);
-        }
+    if (savedConfig) {
+      try {
+        configToLoad = JSON.parse(savedConfig);
+        console.log("Loaded saved config from localStorage");
+      } catch (error) {
+        console.error("Error loading saved config:", error);
+        configToLoad = getEmptyConfig();
       }
-
-      const { initialNodes, initialEdges } = parseConfig(
-        configToLoad,
-        nodeTypes
-      );
-      setNodes(initialNodes);
-      setEdges(initialEdges);
-
-      // Update node counter
-      initialNodes.forEach((node) => {
-        const type = node.type;
-        const match = node.id.match(/_(\d+)$/);
-        const count = match ? parseInt(match[1]) : 0;
-        if (count > (nodeCount.current.get(type) || 0)) {
-          nodeCount.current.set(type, count);
-        }
-      });
     }
-  }, [nodeTypes, setNodes, setEdges]);
 
-  // Setup autosave
+    // Always load config even if server is offline
+    const { initialNodes, initialEdges } = parseConfig(configToLoad, nodeTypes);
+
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+
+    // Update node counter
+    initialNodes.forEach((node) => {
+      const type = node.type;
+      const match = node.id.match(/_(\d+)$/);
+      const count = match ? parseInt(match[1]) : 0;
+      if (count > (nodeCount.current.get(type) || 0)) {
+        nodeCount.current.set(type, count);
+      }
+    });
+
+    setInitialized(true);
+  }, [nodeTypes]); // Only run when nodeTypes change
+
+  // Setup autosave after initialization
   useEffect(() => {
-    // Start autosave interval
+    if (!initialized) return;
+
     autosaveIntervalRef.current = setInterval(() => {
       const currentConfig = composeConfig(nodes, edges);
       localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(currentConfig));
-      console.debug("Config autosaved");
     }, 1000);
 
-    // Clear interval on unmount
     return () => {
       if (autosaveIntervalRef.current) {
         clearInterval(autosaveIntervalRef.current);
       }
     };
-  }, [nodes, edges]);
+  }, [nodes, edges, initialized]);
+
+  // Add this useEffect to reset changes when pipeline stops
+  useEffect(() => {
+    console.log("Pipeline status changed:", pipelineStatus);
+    if (pipelineStatus !== "running") {
+      setHasChanges(false);
+    }
+  }, [pipelineStatus]);
 
   // Notify parent about config changes
   useEffect(() => {
@@ -261,7 +286,7 @@ const FlowBoard = ({ onConfigChange }) => {
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={handleNodesChange} // Use our custom handler
+        onNodesChange={handleNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onDrop={onDrop}
@@ -270,6 +295,7 @@ const FlowBoard = ({ onConfigChange }) => {
           acc[nodeType] = Node;
           return acc;
         }, {})}
+        edgeTypes={edgeTypes} // Add this
         fitView
         style={{ backgroundColor: "#F7F9FB" }}
         nodesDraggable

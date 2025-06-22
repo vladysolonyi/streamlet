@@ -1,4 +1,8 @@
 @import url("./xy-theme.css");
+@import url("./reset.css");
+@import url("./node.css");
+@import url("./prooperties-panel.css");
+@import url("./debug-console.css");
 
 html,
 body {

@@ -46,13 +46,13 @@ class DataBus:
             for callback in self.subscribers[channel]:
                 try:
                     if is_packet:
-                        callback(DataPacket.model_validate(unpacked))
+                        callback(DataPacket.model_validate(unpacked), channel)
                     else:
-                        callback(unpacked)
+                        callback(unpacked, channel)
                 except Exception as e:
-                    self.logger.error(f"Callback error: {str(e)}")
+                    self.logger.error(f"Callback error: {str(e)}", exc_info=True)
         except Exception as e:
-            self.logger.error(f"Delivery failed: {str(e)}")
+            self.logger.error(f"Delivery failed: {str(e)}", exc_info=True)
 
     def flush(self):
         self.subscribers.clear()
