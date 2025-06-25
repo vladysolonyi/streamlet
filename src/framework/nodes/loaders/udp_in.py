@@ -1,6 +1,9 @@
+# framework/nodes/loaders/udp_in.py
+
 import socket
 import logging
 import threading
+import time
 from framework.nodes.base_node import BaseNode
 from pydantic import BaseModel
 from framework.data.data_packet import DataPacket
@@ -9,9 +12,12 @@ from framework.data.data_types import *
 class UDPIn(BaseNode):
     """Node for receiving data via UDP and emitting DataPackets"""
     node_type = "udp_in"
+    MIN_INPUTS = 0
+    MAX_INPUTS = 0
     IS_ACTIVE = True
-    accepted_formats = {DataFormat.BINARY}
-    accepted_categories = {DataCategory.NETWORK}
+    accepted_data_types = {DataType.STREAM, DataType.DERIVED, DataType.STATIC}
+    accepted_formats = {DataFormat.NUMERICAL, DataFormat.TEXTUAL, DataFormat.BINARY}
+    accepted_categories = set(DataCategory)
 
     class Params(BaseModel):
         listen_ip: str = "0.0.0.0"
@@ -24,29 +30,55 @@ class UDPIn(BaseNode):
         self.logger = logging.getLogger('udp_in')
         self.logger.setLevel(logging.DEBUG)
         
+        self.params = self.Params(**config.get('params', {}))
+        self.sock = None
+        self._running = threading.Event()
+        self._thread = None
+        self.logger.info(f"Initializing UDP listener on {self.params.listen_ip}:{self.params.listen_port}")
+
+    def should_process(self):
+        return False
+
+    def start(self):
+        """Start the listener thread"""
+        if self._running.is_set():
+            return
+            
         try:
-            self.params = self.Params(**config.get('params', {}))
+            # Create socket with reuse options
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            
+            # Enable address and port reuse
+            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            if hasattr(socket, 'SO_REUSEPORT'):
+                self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+            
+            # Set timeout and bind
             self.sock.settimeout(self.params.timeout)
             self.sock.bind((self.params.listen_ip, self.params.listen_port))
             
-            self._running = threading.Event()
-            self._thread = None
-            self.logger.info(f"Initialized UDP listener on {self.params.listen_ip}:{self.params.listen_port}")
-            
-            # Start thread immediately on init
-            self.run()
-            
+            self._running.set()
+            self._thread = threading.Thread(
+                target=self._receive_loop,
+                name=f"UDPIn-{self.params.listen_port}",
+                daemon=True
+            )
+            self._thread.start()
+            self.logger.info(f"Started UDP listener on {self.params.listen_ip}:{self.params.listen_port}")
+        except OSError as e:
+            if e.errno == 48:  # Address already in use
+                self.logger.warning("Address in use - retrying in 1 second")
+                time.sleep(1)
+                self.start()  # Retry once
+            else:
+                self.logger.error(f"Start failed: {str(e)}", exc_info=True)
+                raise
         except Exception as e:
-            self.logger.error(f"Init failed: {str(e)}", exc_info=True)
+            self.logger.error(f"Start failed: {str(e)}", exc_info=True)
             raise
 
-    def should_process(self):
-        """Override for active nodes - return False since we manage our own thread"""
-        return False  # Critical change!
-
-    def process(self):
-        """Main receive loop - now only called by our dedicated thread"""
+    def _receive_loop(self):
+        """Main receive loop"""
         while self._running.is_set():
             try:
                 data, addr = self.sock.recvfrom(self.params.buffer_size)
@@ -59,44 +91,63 @@ class UDPIn(BaseNode):
                 
                 self.data_bus.publish(self.outputs[0], packet)
                 
-                
             except socket.timeout:
                 continue
+            except OSError as e:
+                if e.errno == 9:  # Bad file descriptor (socket closed)
+                    break
+                elif self._running.is_set():
+                    self.logger.error(f"Socket error: {str(e)}")
             except Exception as e:
-                self.logger.error(f"Receive error: {str(e)}")
+                if self._running.is_set():
+                    self.logger.error(f"Receive error: {str(e)}")
                 break
 
         self.logger.info("Receive thread exiting")
 
-    def run(self):
-        """Start the listener thread"""
-        if self._thread and self._thread.is_alive():
-            self.logger.warning("Thread already running")
+    def stop(self):
+        """Stop the thread and close socket"""
+        if not self._running.is_set():
             return
             
-        self._running.set()
-        self._thread = threading.Thread(
-            target=self.process,
-            name=f"UDPIn-{self.params.listen_port}",
-            daemon=True
-        )
-        self._thread.start()
-        self.logger.debug("Started listener thread")
-
-    def cleanup(self):
-        """Stop the thread and close socket"""
-        self.logger.debug("Beginning cleanup")
+        self.logger.debug("Stopping UDP listener")
         self._running.clear()
         
-        if self._thread:
-            self._thread.join(timeout=2)
+        # Close socket to break out of recvfrom
+        if self.sock:
+            try:
+                # Set timeout to break recvfrom faster
+                self.sock.settimeout(0.1)
+                
+                # Send dummy packet to unblock recvfrom
+                try:
+                    self.sock.sendto(b'', ('127.0.0.1', self.params.listen_port))
+                except:
+                    pass
+                
+                # Close socket
+                self.sock.close()
+            except Exception as e:
+                self.logger.warning(f"Error closing socket: {str(e)}")
+            finally:
+                self.sock = None
+        
+        # Wait for thread to finish
+        if self._thread and self._thread.is_alive():
+            self._thread.join(timeout=2.0)
             if self._thread.is_alive():
                 self.logger.warning("Thread did not exit cleanly")
+                # Try to force terminate if still alive
+                try:
+                    import ctypes
+                    ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(self._thread.ident), ctypes.py_object(SystemExit))
+                except:
+                    pass
         
-        if self.sock:
-            self.sock.close()
-            self.logger.debug("Socket closed")
-        
-        self.logger.info("Cleanup complete")
+        self.logger.info("UDP listener stopped")
+
+    def cleanup(self):
+        """Alias for stop to match pipeline interface"""
+        self.stop()
 
 NODE_CLASSES = [UDPIn]

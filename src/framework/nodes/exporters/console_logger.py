@@ -16,9 +16,12 @@ class ConsoleLogger(BaseNode):
 
     def process(self):
         """Log the first packet from the first input"""
-        if self.input_buffers[self.inputs[0]]:
-            packet = self.input_buffers[self.inputs[0]][0]
-            print(f"{self.params.prefix} {packet}")
-
+        input_channel = self.inputs[0]
+        
+        if self.input_buffers[input_channel]:
+            while self.input_buffers[input_channel]:
+                packet = self.input_buffers[input_channel][0]  # Peek first                
+                print(f"{self.params.prefix} {packet}")
+                self.input_buffers[input_channel].pop(0)
 # Register the node
 NODE_CLASSES = [ConsoleLogger]

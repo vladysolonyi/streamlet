@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useDebugConsole } from "../../contexts/DebugConsoleContext"; // We'll create this context next
+import React, { useRef, useEffect } from "react";
+import { useDebugConsole } from "../../contexts/DebugConsoleContext";
 
 const DebugConsole = () => {
-  const { messages, clearMessages } = useDebugConsole();
+  const { messages, clearMessages } = useDebugConsole(); // Add clearMessages here
   const messagesEndRef = useRef(null);
 
   // Auto-scroll to bottom when new messages arrive
@@ -28,6 +28,11 @@ const DebugConsole = () => {
         {messages.map((msg, index) => (
           <div key={index} className={`console-line ${msg.type || "log"}`}>
             <span className="timestamp">[{msg.timestamp}] </span>
+            {msg.pipelineId && (
+              <span className="pipeline-id">
+                [{msg.pipelineId.slice(0, 8)}]{" "}
+              </span>
+            )}
             {msg.content}
           </div>
         ))}

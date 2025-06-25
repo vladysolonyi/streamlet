@@ -1,9 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useTelemetry } from "../../contexts/TelemetryContext";
 import { webSocketService } from "../../services/websocket";
 import { usePipeline } from "../../contexts/PipelineContext";
 import { useDebugConsole } from "../../contexts/DebugConsoleContext"; // Add this import
 import { useServerStatus } from "../../contexts/ServerStatusContext";
+import FpsControl from "./FPSControl";
 
 const API_KEY = "SECRET_KEY";
 
@@ -23,7 +24,7 @@ const PipelineControls = ({ config }) => {
     error,
     setError,
   } = usePipeline();
-
+  const [fpsLimit, setFpsLimit] = useState(60);
   const { serverOnline } = useServerStatus();
   const { updateTelemetry } = useTelemetry();
   const { addMessage } = useDebugConsole(); // Add this hook
@@ -40,6 +41,18 @@ const PipelineControls = ({ config }) => {
       }
     }
   }, [config, pipelineStatus, lastAppliedConfig, autoUpdate]);
+
+  // Get saved FPS limit
+  useEffect(() => {
+    const savedFps = localStorage.getItem("fps_limit");
+    if (savedFps) {
+      try {
+        setFpsLimit(parseInt(savedFps));
+      } catch {
+        setFpsLimit(60);
+      }
+    }
+  }, []);
 
   // WebSocket connection for telemetry
   useEffect(() => {
@@ -88,10 +101,16 @@ const PipelineControls = ({ config }) => {
 
   const handleInitialize = async () => {
     try {
-      addMessage("Initializing pipeline...", "info");
+      // Create full config with settings
+      const fullConfig = {
+        settings: {
+          fps_limit: parseInt(localStorage.getItem("fps_limit") || 60),
+        },
+        nodes: config.nodes || [],
+      };
 
       const pipelineConfig = {
-        config: config,
+        config: fullConfig,
         name: "Web Pipeline",
       };
 
@@ -236,15 +255,63 @@ const PipelineControls = ({ config }) => {
     }
   };
 
+  useEffect(() => {
+    if (!pipelineId) return;
+
+    webSocketService.connect(pipelineId);
+
+    const handleTelemetry = (data) => {
+      // Handle all telemetry messages with consistent format
+      switch (data.metric) {
+        case "processing_start":
+          updateTelemetry(data.node_id, "processing_start");
+          break;
+        case "processing_end":
+          updateTelemetry(data.node_id, "processing_end");
+          break;
+        case "processing_error":
+          updateTelemetry(data.node_id, "processing_error", {
+            message: data.value || "Error occurred",
+          });
+          break;
+        case "data_rejected":
+          updateTelemetry(data.node_id, "data_rejected", {
+            count: data.value || 1,
+          });
+          break;
+        case "fps":
+          // Handled by FpsControl
+          break;
+        default:
+          // Log other metrics to debug console
+          addMessage(
+            `[${data.node_id || "system"}] ${data.metric}: ${data.value}`,
+            "log"
+          );
+      }
+    };
+
+    const removeListener = webSocketService.addListener(handleTelemetry);
+
+    return () => {
+      removeListener();
+      webSocketService.disconnect();
+    };
+  }, [pipelineId, updateTelemetry, addMessage]);
+
   const handleApplyUpdate = async () => {
     if (!pipelineId || pipelineStatus !== "running") return;
 
     try {
-      addMessage("Applying configuration updates...", "info");
-
+      // Create full config with settings
       const updatePayload = {
-        config: config, // Your nodes configuration
-        name: "Updated Pipeline", // Optional name
+        config: {
+          settings: {
+            fps_limit: parseInt(localStorage.getItem("fps_limit") || 60),
+          },
+          nodes: config.nodes || [],
+        },
+        name: "Updated Pipeline",
       };
 
       console.log("Sending update:", JSON.stringify(updatePayload));
@@ -356,6 +423,7 @@ const PipelineControls = ({ config }) => {
           {autoUpdate ? "Applying changes..." : "Unapplied changes!"}
         </div>
       )}
+      <FpsControl />
     </div>
   );
 };

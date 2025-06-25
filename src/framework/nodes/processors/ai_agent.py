@@ -43,7 +43,7 @@ class AIAgentNode(BaseNode):
         self.client = Groq(api_key=self.params.api_key)
         self.logger = logging.getLogger('llm_analyst')
 
-    def on_data(self, packet: DataPacket):
+    def on_data(self, packet: DataPacket, _input_channel: str = None):
         """Process incoming data packet with LLM analysis"""
 
         try:

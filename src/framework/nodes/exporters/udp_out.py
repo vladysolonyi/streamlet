@@ -8,9 +8,9 @@ from framework.data.data_types import *
 class UDPOut(BaseNode):
     """Node for sending validated DataPackets via UDP"""
     node_type = "udp_out"
-    accepted_data_types = {DataType.STREAM, DataType.EVENT}
-    accepted_formats = {DataFormat.NUMERICAL, DataFormat.BINARY, DataFormat.TEXTUAL}
-    accepted_categories = {DataCategory.ENVIRONMENTAL, DataCategory.GEOSPATIAL}
+    accepted_data_types = set(DataType)
+    accepted_formats = set(DataFormat)
+    accepted_categories = set(DataCategory)
 
     class Params(BaseModel):
         ip: str = "127.0.0.1"
@@ -24,7 +24,7 @@ class UDPOut(BaseNode):
         self.logger = logging.getLogger('udp_out')
         self.logger.info(f"Initialized UDP output to {self.params.ip}:{self.params.port}")
 
-    def on_data(self, packet: DataPacket):
+    def on_data(self, packet: DataPacket, _input_channel: str = None):
         """Handle incoming DataPacket using BaseNode validation"""
 
         try:

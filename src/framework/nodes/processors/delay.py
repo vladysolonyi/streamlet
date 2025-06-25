@@ -13,7 +13,6 @@ class DelayNode(BaseNode):
     accepted_data_types = set(DataType)
     accepted_formats = set(DataFormat)
     accepted_categories = set(DataCategory)
-    INPUT_MODE = 'single'  # Uses single-input processing
 
     class Params(BaseModel):
         delay_ms: int = 1000

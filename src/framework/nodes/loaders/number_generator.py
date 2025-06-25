@@ -1,29 +1,40 @@
+import time
 from framework.nodes import BaseNode
 from pydantic import BaseModel
 from framework.data.data_types import *
+from typing import Union
 
 class NumberGenerator(BaseNode):
     node_type = "number_generator"
-    IS_ACTIVE = True  # Actively generates data
+    IS_ACTIVE = True
     MIN_INPUTS = 0
-    IS_ASYNC_CAPABLE = False  # Add this line
+    IS_ASYNC_CAPABLE = False
 
     class Params(BaseModel):
-        current: int = 0
-        step: int = 1
+        start_value: float = 0.0
+        step_per_frame: float = 1.0
+        max_value: Union[float, None] = None  # Use None instead of inf
+        wrap_around: bool = False
 
     def __init__(self, config):
         super().__init__(config)
         self.params = self.Params(**config.get('params', {}))
-        self.current = self.params.current
-        self.step = self.params.step
-        self.sequence_id = 0  # Track packet sequence
+        self.current = self.params.start_value
+        self.sequence_id = 0
 
-    def should_process(self):
-        return True
-        
     def process(self):
-        """Generate and publish DataPackets with metadata"""
+        if not (hasattr(self, 'pipeline')) or not self.pipeline.in_frame:
+            return
+            
+        self.current += self.params.step_per_frame
+        
+        # Handle max_value logic with None check
+        if self.params.max_value is not None and self.current > self.params.max_value:
+            if self.params.wrap_around:
+                self.current = self.params.start_value
+            else:
+                self.current = self.params.max_value
+        
         packet = self.create_packet(
             data_type=DataType.STREAM,
             format=DataFormat.NUMERICAL,
@@ -34,7 +45,7 @@ class NumberGenerator(BaseNode):
         )
         
         self.data_bus.publish(self.outputs[0], packet)
-        self.current += self.params.step
+        self.last_output = packet
         self.sequence_id += 1
 
 NODE_CLASSES = [NumberGenerator]

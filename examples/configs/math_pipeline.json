@@ -1,4 +1,7 @@
 {
+  "settings": {
+    "fps_limit": 60
+  },
   "nodes": [
     {
       "type": "number_generator",

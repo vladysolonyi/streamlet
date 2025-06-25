@@ -67,6 +67,7 @@ class BaseNode(metaclass=NodeMeta):
     accepted_categories: Set[DataCategory] = set()
     Params: Type[BaseModel] = None
     IS_ACTIVE = False
+    IS_ASYNC_CAPABLE = False
     REF_PATTERN = r"@ref:([\w\.]+)"
     # Input configuration (set in child nodes)
     MIN_INPUTS = 1  # Minimum number of input channels required
@@ -88,6 +89,8 @@ class BaseNode(metaclass=NodeMeta):
         # Node references for dynamic parameters
         self.references = {}
         self.reference_subscriptions = {}
+        self.reference_cache = {}  # Cache for reference values
+        self.last_output = None  # Track last output packet
         
         # Initialize references from config
         self._parse_references(config)
@@ -128,11 +131,90 @@ class BaseNode(metaclass=NodeMeta):
         else:
             self.params = None
 
+    # NEW METHODS FOR REFERENCE RESOLUTION
+    def resolve_references(self, value: Any) -> Any:
+        """Resolve references in a string value"""
+        if not isinstance(value, str):
+            return value
+            
+        # Find all references in the string
+        matches = re.findall(self.REF_PATTERN, value)
+        if not matches:
+            return value
+            
+        # Replace each reference with its current value
+        for ref_path in matches:
+            try:
+                # Get the referenced value
+                ref_value = self._get_reference_value(ref_path)
+                
+                # Replace the reference pattern with the actual value
+                value = value.replace(f"@ref:{ref_path}", str(ref_value))
+            except Exception as e:
+                self.logger.error(f"Reference resolution failed for {ref_path}: {str(e)}")
+                
+        return value
+
+    def _get_reference_value(self, ref_path: str) -> Any:
+        """Get the current value of a reference"""
+        # Return cached value if available
+        if ref_path in self.reference_cache:
+            return self.reference_cache[ref_path]
+            
+        # Extract node name and path
+        parts = ref_path.split('.')
+        ref_node_name = parts[0]
+        path_parts = parts[1:] if len(parts) > 1 else []
+        
+        # Find the referenced node
+        if not hasattr(self, 'pipeline') or not self.pipeline:
+            raise RuntimeError("Node not attached to a pipeline")
+            
+        ref_node = self.pipeline.node_map.get(ref_node_name)
+        if not ref_node:
+            raise ValueError(f"Referenced node '{ref_node_name}' not found")
+            
+        # Get the value from the node's last output
+        if not hasattr(ref_node, 'last_output'):
+            raise ValueError(f"Node '{ref_node_name}' has no output history")
+            
+        packet = ref_node.last_output
+        if not packet:
+            raise ValueError(f"Node '{ref_node_name}' has no output yet")
+            
+        # Extract value using dot-notation path
+        current = packet
+        for part in path_parts:
+            if hasattr(current, part):
+                current = getattr(current, part)
+            elif isinstance(current, dict) and part in current:
+                current = current[part]
+            elif isinstance(current, list) and part.isdigit():
+                index = int(part)
+                current = current[index] if index < len(current) else None
+            else:
+                raise ValueError(f"Invalid path segment: {part}")
+                
+            if current is None:
+                break
+                
+        # Cache the value
+        self.reference_cache[ref_path] = current
+        return current
+
+    def clear_reference_cache(self):
+        """Clear cached reference values"""
+        self.reference_cache = {}
+    # END OF NEW METHODS
+
     def apply_params(self):
         """Apply updated parameters immediately"""
         # Default implementation - recreate params object
         if self.Params and hasattr(self, 'config'):
             self.params = self.Params(**self.config.get('params', {}))
+        
+        # Clear reference cache when parameters are updated
+        self.clear_reference_cache()
         
         # Custom logic for specific nodes
         if hasattr(self, 'on_params_updated'):
@@ -141,6 +223,10 @@ class BaseNode(metaclass=NodeMeta):
     def _update_reference(self, param_name: str, ref_path: str, packet: DataPacket):
         """Update parameter value with automatic type conversion"""
         try:
+            # Clear cache for this reference path
+            if ref_path in self.reference_cache:
+                del self.reference_cache[ref_path]
+                
             # Extract value based on reference path
             raw_value = self._extract_value(packet, ref_path)
             
@@ -203,8 +289,6 @@ class BaseNode(metaclass=NodeMeta):
                 self.logger.warning(f"Could not convert {type(value)} to {target_type}")
                 return value
 
-    
-
     def _parse_references(self, config):
         """Find and register parameter references in config"""
         if 'params' not in config:
@@ -220,12 +304,19 @@ class BaseNode(metaclass=NodeMeta):
 
     def on_data(self, packet: DataPacket, input_channel: str):
         """Handle incoming data with channel information"""
+        is_reference = False
+        
         # First check if this is a reference we care about
         for param_name, ref_path in self.references.items():
             ref_node_name = ref_path.split('.')[0]
             if input_channel == f"{ref_node_name}_out":
                 self._update_reference(param_name, ref_path, packet)
+                is_reference = True
         
+        # If it's ONLY a reference (not a normal input), stop here
+        if is_reference and input_channel not in self.inputs:
+            return
+            
         # Then handle normal input processing
         if input_channel not in self.input_buffers:
             self.logger.error(f"Unregistered input channel: {input_channel}")
@@ -235,14 +326,18 @@ class BaseNode(metaclass=NodeMeta):
             self.log_rejection(packet)
             return
             
-        # Store packet in buffer
-        self.input_buffers[input_channel].append(packet)
+        # Store packet in buffer with size limit
+        MAX_BUFFER_SIZE = 100
+        if len(self.input_buffers[input_channel]) < MAX_BUFFER_SIZE:
+            self.input_buffers[input_channel].append(packet)
+        else:
+            self.logger.warning(f"Buffer overflow on {input_channel}, packet dropped")
+            self.rejected_count += 1
         
         # Check if we have enough inputs to process
         ready_channels = [ch for ch, buf in self.input_buffers.items() if buf]
         if len(ready_channels) >= self.MIN_INPUTS:
             self.process()
-            self._reset_input_buffers()
 
 
     def _extract_value(self, packet: DataPacket, ref_path: str) -> Any:
@@ -286,16 +381,12 @@ class BaseNode(metaclass=NodeMeta):
             self.logger.error(f"Value extraction failed: {str(e)}")
             raise
 
-    def _reset_input_buffers(self):
-        """Reset buffers after processing"""
-        for channel in self.input_buffers:
-            self.input_buffers[channel] = []
-
     # In BaseNode class
     def emit_telemetry(self, metric: str, value: Any):
         """Non-blocking telemetry emission"""
         try:
             self.telemetry.broadcast_sync({
+                "pipeline_id": self.pipeline.id,
                 "node_id": self.name,
                 "metric": metric,
                 "value": value,
@@ -312,9 +403,6 @@ class BaseNode(metaclass=NodeMeta):
         """Override for active nodes that need periodic execution"""
         return self.IS_ACTIVE
 
-    def initialize(self):
-        """Hardware/SDR initialization (override in loaders)"""
-        pass
 
     def validate_input(self, packet: DataPacket) -> bool:
         """Check if node can process this data type with telemetry"""
@@ -368,9 +456,14 @@ class BaseNode(metaclass=NodeMeta):
         Main processing method - override in child nodes
         Access packets through self.input_buffers
         """
-        # Default implementation processes first input
+        # Default implementation processes first input and removes packet
         if self.inputs and self.input_buffers[self.inputs[0]]:
-            packet = self.input_buffers[self.inputs[0]][0]
+            # Get and remove the first packet
+            packet = self.input_buffers[self.inputs[0]].pop(0)
+            
+            # Store as last output for reference access
+            self.last_output = packet
+            
             for output_channel in self.outputs:
                 self.data_bus.publish(output_channel, packet)
 

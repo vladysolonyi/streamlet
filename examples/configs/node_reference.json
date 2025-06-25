@@ -1,4 +1,7 @@
 {
+  "settings": {
+    "fps_limit": 60
+  },
   "nodes": [
     {
       "type": "number_generator",
@@ -15,9 +18,7 @@
       "params": {
         "prefix": "@ref:number_generator_1.content"
       },
-      "inputs": [
-        "number_generator_1"
-      ]
+      "inputs": ["number_generator_1"]
     }
   ]
 }

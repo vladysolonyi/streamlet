@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 from framework.core.telemetry import telemetry
 from fastapi.security import APIKeyHeader
 import time
+import json
+import logging
 from framework.core import Pipeline, NodeRegistry, PipelineManager
 manager = PipelineManager()
 
@@ -69,7 +71,33 @@ async def health_check():
 
 @app.post("/pipelines")
 def create_pipeline(config: PipelineConfig):
-    pipeline_id = manager.create_pipeline(config.config)
+    # Convert string config to dict if needed
+    if isinstance(config.config, str):
+        try:
+            # Try to parse as JSON first
+            config_dict = json.loads(config.config)
+        except json.JSONDecodeError:
+            try:
+                # Try to parse as YAML
+                config_dict = yaml.safe_load(config.config)
+            except yaml.YAMLError:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid config format. Must be JSON or YAML"
+                )
+    else:
+        config_dict = config.config
+    
+    # Validate settings structure
+    if "settings" not in config_dict:
+        config_dict["settings"] = {}
+    
+    # Ensure fps_limit is in settings
+    if "fps_limit" not in config_dict["settings"]:
+        logging.warning("fps_limit not found in settings, using default (60fps)")
+        config_dict["settings"]["fps_limit"] = 60.0
+    
+    pipeline_id = manager.create_pipeline(config_dict)
     return {"pipeline_id": pipeline_id}
 
 @app.post("/pipelines/{pipeline_id}/start")
@@ -103,8 +131,39 @@ def delete_pipeline(pipeline_id: str):
 
 @app.put("/pipelines/{pipeline_id}/config")
 def update_pipeline_config(pipeline_id: str, config: PipelineConfig):
-    if not manager.update_pipeline_config(pipeline_id, config.config):
+    # Convert string config to dict if needed (same as create)
+    if isinstance(config.config, str):
+        try:
+            config_dict = json.loads(config.config)
+        except json.JSONDecodeError:
+            try:
+                config_dict = yaml.safe_load(config.config)
+            except yaml.YAMLError:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid config format. Must be JSON or YAML"
+                )
+    else:
+        config_dict = config.config
+    
+    # Validate settings structure
+    if "settings" not in config_dict:
+        config_dict["settings"] = {}
+    
+    # Ensure fps_limit exists in settings
+    if "fps_limit" not in config_dict["settings"]:
+        # Keep existing fps_limit if updating, otherwise default to 60
+        pipeline = manager.get_pipeline(pipeline_id)
+        if pipeline:
+            config_dict["settings"]["fps_limit"] = pipeline.fps_limit
+        else:
+            config_dict["settings"]["fps_limit"] = 60.0
+            logging.warning("fps_limit not found in settings, using default (60fps)")
+
+    
+    if not manager.update_pipeline_config(pipeline_id, config_dict):
         raise HTTPException(status_code=404, detail="Pipeline not found or update failed")
+    
     return {"status": "updated"}
 
 @app.patch("/pipelines/{pipeline_id}/nodes/{node_id}")

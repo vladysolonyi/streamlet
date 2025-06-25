@@ -12,7 +12,6 @@ import {
 import Node from "./Node";
 import { useDnD } from "../../../contexts/DnDContext";
 import { usePipeline } from "../../../contexts/PipelineContext";
-import { useServerStatus } from "../../../contexts/ServerStatusContext"; // Add this
 
 import {
   parseConfig,
@@ -41,7 +40,6 @@ const FlowBoard = ({ onConfigChange }) => {
   }).current;
   useReferenceMonitor(nodes, setEdges);
 
-  const { serverOnline } = useServerStatus(); // Add this
   const [initialized, setInitialized] = useState(false); // Track initialization status
 
   const { screenToFlowPosition } = useReactFlow();

@@ -9,11 +9,16 @@ class DataBus:
     def __init__(self, max_workers: int = 10):
         self.subscribers = defaultdict(list)
         self.channels = defaultdict(list)
-
         self.serializer = msgpack
         self.executor = ThreadPoolExecutor(max_workers=max_workers)
         self.logger = logging.getLogger('databus')
-
+        self.enabled = False  # DataBus starts disabled
+        
+    def set_enabled(self, enabled: bool):
+        """Enable or disable data processing"""
+        self.enabled = enabled
+        self.logger.info(f"DataBus {'enabled' if enabled else 'disabled'}")
+        
     def register_channel(self, channel: str):
         """Create a new data channel"""
         if channel not in self.channels:
@@ -25,7 +30,12 @@ class DataBus:
 
     def publish(self, channel: str, data: Any):
         """Handle delivery without blocking publisher"""
+        # Only process data if DataBus is enabled
+        if not self.enabled:
+            return
+            
         if not self.subscribers[channel]:
+            self.logger.debug(f"No subscribers for channel {channel}")
             return
             
         # Process in separate thread to avoid blocking
@@ -55,10 +65,14 @@ class DataBus:
             self.logger.error(f"Delivery failed: {str(e)}", exc_info=True)
 
     def flush(self):
+        """Clear all data from channels"""
         self.subscribers.clear()
+        self.channels.clear()
 
     def shutdown(self):
         """Clean up thread pool"""
+        self.logger.info("Shutting down DataBus")
+        self.enabled = False
         self.executor.shutdown(wait=True)
 
     def get_channel_stats(self) -> Dict[str, Dict[str, int]]:

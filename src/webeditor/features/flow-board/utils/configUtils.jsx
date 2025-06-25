@@ -28,7 +28,9 @@ export const extractReferences = (params) => {
 };
 
 export const validateConfig = (config) => {
-  // ... existing validation code ...
+  // Basic validation logic
+  if (!config) throw new Error("Config is undefined");
+  if (!config.nodes) throw new Error("Config missing nodes array");
 };
 
 export const parseConfig = (config, nodeTypes = {}) => {
@@ -47,7 +49,7 @@ export const parseConfig = (config, nodeTypes = {}) => {
     return {
       id: node.name,
       type: node.type,
-      position: { x: index * 250, y: 0 },
+      position: node.position || { x: index * 250, y: 0 },
       data: {
         label: node.name,
         params: {
@@ -100,17 +102,30 @@ export const parseConfig = (config, nodeTypes = {}) => {
   return { initialNodes, initialEdges };
 };
 
-export const composeConfig = (nodes, edges) => ({
-  nodes: nodes.map((node) => ({
-    type: node.type,
-    name: node.data.label,
-    params: node.data.params,
-    inputs: edges
-      .filter((edge) => edge.target === node.id && !edge.type)
-      .map((edge) => edge.source),
-  })),
-});
+export const composeConfig = (nodes, edges) => {
+  // Get FPS limit from localStorage
+  const fpsLimit = parseInt(localStorage.getItem("fps_limit") || 60);
+
+  return {
+    settings: {
+      fps_limit: fpsLimit,
+    },
+    nodes: nodes.map((node) => ({
+      id: node.id,
+      type: node.type,
+      name: node.data.label,
+      position: node.position,
+      params: node.data.params,
+      inputs: edges
+        .filter((edge) => edge.target === node.id && edge.type !== "straight")
+        .map((edge) => edge.source),
+    })),
+  };
+};
 
 export const getEmptyConfig = () => ({
+  settings: {
+    fps_limit: 60, // Default FPS limit
+  },
   nodes: [],
 });

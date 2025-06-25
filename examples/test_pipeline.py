@@ -5,7 +5,7 @@ import time
 
 # Configure logging
 logging.basicConfig(
-    level=logging.DEBUG,  # Set to DEBUG for detailed output
+    level=logging.ERROR,  # Set to DEBUG for detailed output
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),  # Output to terminal
@@ -29,6 +29,9 @@ print("Pipeline started")
 
 # New config to test
 config_new = {
+  "settings": {
+    "fps_limit": 60
+  },
     "nodes": [
         {
             "type": "number_generator",
@@ -50,12 +53,12 @@ config_new = {
 }
 
 # Update pipeline configuration
-print("\n=== Updating pipeline configuration ===")
-success = manager.update_pipeline_config(pipeline_id, config_new)
-print(f"Update successful: {success}")
+# print("\n=== Updating pipeline configuration ===")
+# success = manager.update_pipeline_config(pipeline_id, config_new)
+# print(f"Update successful: {success}")
 
-# Let it run for a bit
-print("Pipeline running with new config...")
+# # Let it run for a bit
+# print("Pipeline running with new config...")
 time.sleep(3)
 
 # Stop and clean up

@@ -3,6 +3,7 @@
 @import url("./node.css");
 @import url("./prooperties-panel.css");
 @import url("./debug-console.css");
+@import url("./fps-control.css");
 
 html,
 body {
@@ -21,6 +22,11 @@ body {
   display: flex;
   flex-grow: 1;
   height: 100%;
+}
+
+.config-controls {
+  position: absolute;
+  z-index: 9999;
 }
 
 .dndflow aside {

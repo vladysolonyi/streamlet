@@ -6,6 +6,7 @@ import { PipelineProvider } from "./contexts/PipelineContext";
 import Sidebar from "./sidebar/Sidebar";
 import FlowBoard from "./features/flow-board/components/FlowBoard";
 import PipelineControls from "./features/pipeline-controls/PipelineControls";
+
 import PropertiesPanel from "./features/properties-panel/PropertiesPanel"; // New component
 import { DebugConsoleProvider } from "./contexts/DebugConsoleContext";
 
@@ -27,13 +28,17 @@ const App = () => {
               <ServerStatusProvider>
                 <div className="dndflow">
                   <Sidebar />
-                  <DebugConsole />
+
                   <PropertiesPanel />
-                  <ServerStatusIndicator />
+
                   <FlowBoard onConfigChange={setPipelineConfig} />
-                  {pipelineConfig && (
-                    <PipelineControls config={pipelineConfig} />
-                  )}
+                  <div className="controls">
+                    <ServerStatusIndicator />
+                    {pipelineConfig && (
+                      <PipelineControls config={pipelineConfig} />
+                    )}
+                    <DebugConsole />
+                  </div>
                 </div>
               </ServerStatusProvider>
             </DebugConsoleProvider>
