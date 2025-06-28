@@ -8,13 +8,14 @@ from framework.nodes.base_node import BaseNode
 from pydantic import BaseModel
 from framework.data.data_packet import DataPacket
 from framework.data.data_types import *
+from framework.core.decorators import node_telemetry
 
 class UDPIn(BaseNode):
     """Node for receiving data via UDP and emitting DataPackets"""
     node_type = "udp_in"
     MIN_INPUTS = 0
     MAX_INPUTS = 0
-    IS_ACTIVE = True
+    IS_GENERATOR = True
     accepted_data_types = {DataType.STREAM, DataType.DERIVED, DataType.STATIC}
     accepted_formats = {DataFormat.NUMERICAL, DataFormat.TEXTUAL, DataFormat.BINARY}
     accepted_categories = set(DataCategory)
@@ -77,6 +78,7 @@ class UDPIn(BaseNode):
             self.logger.error(f"Start failed: {str(e)}", exc_info=True)
             raise
 
+    @node_telemetry("receive")
     def _receive_loop(self):
         """Main receive loop"""
         while self._running.is_set():
@@ -85,6 +87,9 @@ class UDPIn(BaseNode):
                 self.logger.debug(f"Received {len(data)} bytes from {addr}")
                 
                 packet = self.create_packet(
+                    data_type=DataType.STREAM,
+                    format=DataFormat.TEXTUAL,
+                    category=DataCategory.NETWORK,
                     content=data,
                     metadata={"remote_addr": addr}
                 )

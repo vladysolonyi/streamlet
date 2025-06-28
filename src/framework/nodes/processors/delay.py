@@ -7,12 +7,16 @@ from pydantic import BaseModel
 from framework.nodes.base_node import BaseNode
 from framework.data.data_packet import DataPacket
 from framework.data.data_types import *
+from framework.core.decorators import node_telemetry
 
 class DelayNode(BaseNode):
     node_type = "delay"
+    # Accept all data
     accepted_data_types = set(DataType)
     accepted_formats = set(DataFormat)
     accepted_categories = set(DataCategory)
+    MIN_INPUTS = 1
+    MAX_INPUTS = 1
 
     class Params(BaseModel):
         delay_ms: int = 1000
@@ -35,8 +39,19 @@ class DelayNode(BaseNode):
         self.logger = logging.getLogger('delay_node')
         self.logger.info(f"Delay node initialized with {self.params.delay_ms}ms delay")
 
-    def process(self, packet: DataPacket):
-        """Handle single input immediately"""
+    @node_telemetry("process")
+    def process(self):
+        """Process packets from input buffers and add to delay queue"""
+        # Since we have exactly one input (MIN_INPUTS=1, MAX_INPUTS=1)
+        input_channel = self.inputs[0]
+        
+        # Process all packets in the buffer for this input
+        while self.input_buffers[input_channel]:
+            packet = self.input_buffers[input_channel].pop(0)
+            self._enqueue_packet(packet)
+
+    def _enqueue_packet(self, packet):
+        """Add packet to the delay queue with proper handling"""
         try:
             # Add packet to queue with timestamp
             self.queue.put((time.monotonic(), packet), block=not self.params.drop_on_overflow)

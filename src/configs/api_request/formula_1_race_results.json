@@ -1,0 +1,37 @@
+{
+  "settings": { "fps_limit": 60 },
+  "nodes": [
+    {
+      "id": "timer_f1",
+      "type": "timer",
+      "name": "timer_f1",
+      "params": {
+        "interval": "60",
+        "use_textual": false
+      },
+      "inputs": []
+    },
+    {
+      "id": "api_f1",
+      "type": "api_request",
+      "name": "api_f1",
+      "params": {
+        "url": "http://ergast.com/api/f1/current/last/results.json",
+        "method": "GET",
+        "headers": {},
+        "params": {},
+        "data": {},
+        "timeout": 5,
+        "response_format": "json"
+      },
+      "inputs": ["timer_f1"]
+    },
+    {
+      "id": "console_logger_f1",
+      "type": "console_logger",
+      "name": "console_logger_f1",
+      "params": { "prefix": "[F1]" },
+      "inputs": ["api_f1"]
+    }
+  ]
+}

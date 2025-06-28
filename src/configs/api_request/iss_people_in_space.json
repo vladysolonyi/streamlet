@@ -1,0 +1,41 @@
+{
+  "settings": {
+    "fps_limit": 60
+  },
+  "nodes": [
+    {
+      "id": "timer_iss",
+      "type": "timer",
+      "name": "timer_iss",
+      "params": {
+        "interval": "30",
+        "use_textual": false
+      },
+      "inputs": []
+    },
+    {
+      "id": "api_notify",
+      "type": "api_request",
+      "name": "api_notify",
+      "params": {
+        "url": "http://api.open-notify.org/astros.json",
+        "method": "GET",
+        "headers": {},
+        "params": {},
+        "data": {},
+        "timeout": 3,
+        "response_format": "json"
+      },
+      "inputs": ["timer_iss"]
+    },
+    {
+      "id": "console_logger_iss",
+      "type": "console_logger",
+      "name": "console_logger_iss",
+      "params": {
+        "prefix": "[ISS]"
+      },
+      "inputs": ["api_notify"]
+    }
+  ]
+}

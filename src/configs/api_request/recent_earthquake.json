@@ -1,0 +1,37 @@
+{
+  "settings": { "fps_limit": 60 },
+  "nodes": [
+    {
+      "id": "timer_quake",
+      "type": "timer",
+      "name": "timer_quake",
+      "params": {
+        "interval": "120",
+        "use_textual": false
+      },
+      "inputs": []
+    },
+    {
+      "id": "api_quake",
+      "type": "api_request",
+      "name": "api_quake",
+      "params": {
+        "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&limit=10&minmagnitude=4.5",
+        "method": "GET",
+        "headers": {},
+        "params": {},
+        "data": {},
+        "timeout": 4,
+        "response_format": "json"
+      },
+      "inputs": ["timer_quake"]
+    },
+    {
+      "id": "console_logger_quake",
+      "type": "console_logger",
+      "name": "console_logger_quake",
+      "params": { "prefix": "[QUAKE]" },
+      "inputs": ["api_quake"]
+    }
+  ]
+}

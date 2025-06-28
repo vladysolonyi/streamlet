@@ -9,6 +9,7 @@ import json
 import threading
 import time
 import copy
+import re
 
 class Pipeline:
     def __init__(self, config_source: Union[str, Dict], pipeline_id: str):
@@ -203,73 +204,7 @@ class Pipeline:
             else:
                 node.logger.debug(f"Already subscribed to {ref_node_name} via inputs")
 
-    def resolve_references(self, value: Any) -> Any:
-        """Resolve all references in a string value"""
-        if not isinstance(value, str):
-            return value
-            
-        # Find all references in the string
-        matches = re.findall(self.REF_PATTERN, value)
-        if not matches:
-            return value
-            
-        # Replace each reference with its current value
-        for ref_path in matches:
-            try:
-                ref_value = self._get_reference_value(ref_path)
-                value = value.replace(f"@ref:{ref_path}", str(ref_value))
-            except Exception as e:
-                self.logger.error(f"Reference resolution failed for {ref_path}: {str(e)}")
-                
-        return value
-
-    def _get_reference_value(self, ref_path: str) -> Any:
-        """Get the current value of a reference"""
-        # Return cached value if available
-        if ref_path in self.reference_cache:
-            return self.reference_cache[ref_path]
-            
-        # Extract node name and path
-        parts = ref_path.split('.')
-        ref_node_name = parts[0]
-        path_parts = parts[1:] if len(parts) > 1 else []
-        
-        # Find the referenced node
-        if not hasattr(self, 'pipeline') or not self.pipeline:
-            raise RuntimeError("Node not attached to a pipeline")
-            
-        ref_node = self.pipeline.node_map.get(ref_node_name)
-        if not ref_node:
-            raise ValueError(f"Referenced node '{ref_node_name}' not found")
-            
-        # Get the value from the node's last output
-        if not hasattr(ref_node, 'last_output'):
-            raise ValueError(f"Node '{ref_node_name}' has no output history")
-            
-        packet = ref_node.last_output
-        if not packet:
-            raise ValueError(f"Node '{ref_node_name}' has no output yet")
-            
-        # Extract value using dot-notation path
-        current = packet
-        for part in path_parts:
-            if hasattr(current, part):
-                current = getattr(current, part)
-            elif isinstance(current, dict) and part in current:
-                current = current[part]
-            elif isinstance(current, list) and part.isdigit():
-                index = int(part)
-                current = current[index] if index < len(current) else None
-            else:
-                raise ValueError(f"Invalid path segment: {part}")
-                
-            if current is None:
-                break
-                
-        # Cache the value
-        self.reference_cache[ref_path] = current
-        return current
-
+    
     def update_config(self, new_config: dict):
         """Update pipeline configuration"""
         with self._config_lock:

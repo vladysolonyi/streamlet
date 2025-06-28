@@ -1,0 +1,37 @@
+{
+  "settings": { "fps_limit": 60 },
+  "nodes": [
+    {
+      "id": "timer_gdp",
+      "type": "timer",
+      "name": "timer_gdp",
+      "params": {
+        "interval": "300",
+        "use_textual": false
+      },
+      "inputs": []
+    },
+    {
+      "id": "api_gdp",
+      "type": "api_request",
+      "name": "api_gdp",
+      "params": {
+        "url": "https://api.worldbank.org/v2/country/all/indicator/NY.GDP.MKTP.CD?format=json&per_page=1&date=2023",
+        "method": "GET",
+        "headers": {},
+        "params": {},
+        "data": {},
+        "timeout": 7,
+        "response_format": "json"
+      },
+      "inputs": ["timer_gdp"]
+    },
+    {
+      "id": "console_logger_gdp",
+      "type": "console_logger",
+      "name": "console_logger_gdp",
+      "params": { "prefix": "[GDP]" },
+      "inputs": ["api_gdp"]
+    }
+  ]
+}

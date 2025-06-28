@@ -1,0 +1,41 @@
+{
+  "settings": {
+    "fps_limit": 60
+  },
+  "nodes": [
+    {
+      "id": "timer_numbers",
+      "type": "timer",
+      "name": "timer_numbers",
+      "params": {
+        "interval": "45",
+        "use_textual": false
+      },
+      "inputs": []
+    },
+    {
+      "id": "api_numbers",
+      "type": "api_request",
+      "name": "api_numbers",
+      "params": {
+        "url": "http://numbersapi.com/random/math",
+        "method": "GET",
+        "headers": {},
+        "params": {},
+        "data": {},
+        "timeout": 3,
+        "response_format": "text"
+      },
+      "inputs": ["timer_numbers"]
+    },
+    {
+      "id": "console_logger_numbers",
+      "type": "console_logger",
+      "name": "console_logger_numbers",
+      "params": {
+        "prefix": "[NUM]"
+      },
+      "inputs": ["api_numbers"]
+    }
+  ]
+}

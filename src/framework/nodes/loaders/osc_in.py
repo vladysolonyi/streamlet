@@ -12,7 +12,7 @@ class OSCInNode(BaseNode):
     node_type = "osc_in"
     MIN_INPUTS = 0
     MAX_INPUTS = 0
-    IS_ACTIVE = True
+    IS_GENERATOR = True
     accepted_data_types = set(DataCategory)
     accepted_formats = set(DataCategory)
     accepted_categories = set(DataCategory)

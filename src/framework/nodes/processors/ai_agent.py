@@ -7,6 +7,7 @@ from groq import Groq
 from framework.nodes.base_node import BaseNode
 from framework.data.data_packet import DataPacket
 from framework.data.data_types import *
+from framework.core.decorators import node_telemetry
 
 class AIAgentNode(BaseNode):
     node_type = "ai_agent"
@@ -43,6 +44,7 @@ class AIAgentNode(BaseNode):
         self.client = Groq(api_key=self.params.api_key)
         self.logger = logging.getLogger('llm_analyst')
 
+    @node_telemetry("on_data")
     def on_data(self, packet: DataPacket, _input_channel: str = None):
         """Process incoming data packet with LLM analysis"""
 

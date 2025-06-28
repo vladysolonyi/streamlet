@@ -2,6 +2,7 @@
 from framework.nodes.base_node import BaseNode
 from pydantic import BaseModel
 from framework.data.data_types import *
+from framework.core.decorators import node_telemetry
 
 class ConsoleLogger(BaseNode):
     node_type = "console_logger"
@@ -9,11 +10,12 @@ class ConsoleLogger(BaseNode):
     accepted_formats = set(DataFormat)
     accepted_categories = set(DataCategory)
     IS_ASYNC_CAPABLE = False
-    IS_ACTIVE = False
+    IS_GENERATOR = False
     
     class Params(BaseModel):
         prefix: str = "[LOG]"
 
+    @node_telemetry("process")
     def process(self):
         """Log the first packet from the first input"""
         input_channel = self.inputs[0]

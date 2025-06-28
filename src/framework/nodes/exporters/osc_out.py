@@ -10,7 +10,7 @@ class OSCOutNode(BaseNode):
     node_type = "osc_out"
     MIN_INPUTS = 1
     MAX_INPUTS = 1
-    IS_ACTIVE = False
+    IS_GENERATOR = False
     accepted_data_types = set(DataType)
     accepted_formats = set(DataFormat)
     accepted_categories = set(DataCategory)

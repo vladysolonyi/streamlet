@@ -5,13 +5,14 @@ from pydantic import BaseModel
 from framework.nodes.base_node import BaseNode
 from framework.data.data_packet import DataPacket
 from framework.data.data_types import *
+from framework.core.decorators import node_telemetry
 
-class DataAccumulator(BaseNode):
-    node_type = "data_accumulator"
+class AccumulatorNode(BaseNode):
+    node_type = "accumulator"
     accepted_data_types = {DataType.STREAM, DataType.EVENT}
     accepted_formats = {DataFormat.NUMERICAL, DataFormat.TEXTUAL, DataFormat.BINARY}
     accepted_categories = set(DataCategory)
-    IS_ACTIVE = False  # Passive node - only processes when data arrives
+    IS_GENERATOR = False  # Passive node - only processes when data arrives
     
     class Params(BaseModel):
         flush_by: str = "size"  # "size" or "count"
@@ -34,6 +35,7 @@ class DataAccumulator(BaseNode):
             self.logger.warning("Invalid flush_by value. Defaulting to 'size'")
             self.params.flush_by = "size"
 
+    @node_telemetry("on_data")
     def on_data(self, packet: DataPacket, input_channel: str):
         """Validate and add incoming data to buffer"""
         try:
@@ -190,4 +192,4 @@ class DataAccumulator(BaseNode):
         self.current_size = 0
         self.logger.debug("Buffer reset (cleared %d items)", prev_count)
 
-NODE_CLASSES = [DataAccumulator]
+NODE_CLASSES = [AccumulatorNode]

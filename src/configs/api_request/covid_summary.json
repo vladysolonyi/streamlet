@@ -1,0 +1,37 @@
+{
+  "settings": { "fps_limit": 60 },
+  "nodes": [
+    {
+      "id": "timer_covid",
+      "type": "timer",
+      "name": "timer_covid",
+      "params": {
+        "interval": "90",
+        "use_textual": false
+      },
+      "inputs": []
+    },
+    {
+      "id": "api_covid",
+      "type": "api_request",
+      "name": "api_covid",
+      "params": {
+        "url": "https://disease.sh/v3/covid-19/all",
+        "method": "GET",
+        "headers": {},
+        "params": {},
+        "data": {},
+        "timeout": 6,
+        "response_format": "json"
+      },
+      "inputs": ["timer_covid"]
+    },
+    {
+      "id": "console_logger_covid",
+      "type": "console_logger",
+      "name": "console_logger_covid",
+      "params": { "prefix": "[COVID]" },
+      "inputs": ["api_covid"]
+    }
+  ]
+}

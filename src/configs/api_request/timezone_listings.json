@@ -1,0 +1,37 @@
+{
+  "settings": { "fps_limit": 60 },
+  "nodes": [
+    {
+      "id": "timer_timezones",
+      "type": "timer",
+      "name": "timer_timezones",
+      "params": {
+        "interval": "3600",
+        "use_textual": false
+      },
+      "inputs": []
+    },
+    {
+      "id": "api_timezones",
+      "type": "api_request",
+      "name": "api_timezones",
+      "params": {
+        "url": "http://worldtimeapi.org/api/timezone",
+        "method": "GET",
+        "headers": {},
+        "params": {},
+        "data": {},
+        "timeout": 5,
+        "response_format": "json"
+      },
+      "inputs": ["timer_timezones"]
+    },
+    {
+      "id": "console_logger_timezones",
+      "type": "console_logger",
+      "name": "console_logger_timezones",
+      "params": { "prefix": "[TIMEZONES]" },
+      "inputs": ["api_timezones"]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "settings": { "fps_limit": 60 },
+  "nodes": [
+    {
+      "id": "timer_datausa",
+      "type": "timer",
+      "name": "timer_datausa",
+      "params": {
+        "interval": "300",
+        "use_textual": false
+      },
+      "inputs": []
+    },
+    {
+      "id": "api_datausa",
+      "type": "api_request",
+      "name": "api_datausa",
+      "params": {
+        "url": "https://datausa.io/api/data?drilldowns=Nation&measures=Population,Median%20Age,Household%20Income",
+        "method": "GET",
+        "headers": {},
+        "params": {},
+        "data": {},
+        "timeout": 6,
+        "response_format": "json"
+      },
+      "inputs": ["timer_datausa"]
+    },
+    {
+      "id": "console_logger_datausa",
+      "type": "console_logger",
+      "name": "console_logger_datausa",
+      "params": { "prefix": "[DATAUSA]" },
+      "inputs": ["api_datausa"]
+    }
+  ]
+}

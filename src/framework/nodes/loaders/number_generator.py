@@ -2,11 +2,12 @@ import time
 from framework.nodes import BaseNode
 from pydantic import BaseModel
 from framework.data.data_types import *
+from framework.core.decorators import node_telemetry
 from typing import Union
 
 class NumberGenerator(BaseNode):
     node_type = "number_generator"
-    IS_ACTIVE = True
+    IS_GENERATOR = True
     MIN_INPUTS = 0
     IS_ASYNC_CAPABLE = False
 
@@ -22,7 +23,8 @@ class NumberGenerator(BaseNode):
         self.current = self.params.start_value
         self.sequence_id = 0
 
-    def process(self):
+    @node_telemetry("process")
+    def process(self):        
         if not (hasattr(self, 'pipeline')) or not self.pipeline.in_frame:
             return
             

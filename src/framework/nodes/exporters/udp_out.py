@@ -4,6 +4,7 @@ from framework.nodes.base_node import BaseNode
 from pydantic import BaseModel
 from framework.data.data_packet import DataPacket
 from framework.data.data_types import *
+from framework.core.decorators import node_telemetry
 
 class UDPOut(BaseNode):
     """Node for sending validated DataPackets via UDP"""
@@ -24,6 +25,7 @@ class UDPOut(BaseNode):
         self.logger = logging.getLogger('udp_out')
         self.logger.info(f"Initialized UDP output to {self.params.ip}:{self.params.port}")
 
+    @node_telemetry("on_data")
     def on_data(self, packet: DataPacket, _input_channel: str = None):
         """Handle incoming DataPacket using BaseNode validation"""
 

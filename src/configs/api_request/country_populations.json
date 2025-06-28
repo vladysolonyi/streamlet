@@ -1,0 +1,37 @@
+{
+  "settings": { "fps_limit": 60 },
+  "nodes": [
+    {
+      "id": "timer_countries",
+      "type": "timer",
+      "name": "timer_countries",
+      "params": {
+        "interval": "600",
+        "use_textual": false
+      },
+      "inputs": []
+    },
+    {
+      "id": "api_countries",
+      "type": "api_request",
+      "name": "api_countries",
+      "params": {
+        "url": "https://restcountries.com/v3.1/all?fields=name,population",
+        "method": "GET",
+        "headers": {},
+        "params": {},
+        "data": {},
+        "timeout": 5,
+        "response_format": "json"
+      },
+      "inputs": ["timer_countries"]
+    },
+    {
+      "id": "console_logger_countries",
+      "type": "console_logger",
+      "name": "console_logger_countries",
+      "params": { "prefix": "[COUNTRIES]" },
+      "inputs": ["api_countries"]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "settings": { "fps_limit": 60 },
+  "nodes": [
+    {
+      "id": "timer_weather",
+      "type": "timer",
+      "name": "timer_weather",
+      "params": {
+        "interval": "60",
+        "use_textual": false
+      },
+      "inputs": []
+    },
+    {
+      "id": "api_weather",
+      "type": "api_request",
+      "name": "api_weather",
+      "params": {
+        "url": "https://api.open-meteo.com/v1/forecast?latitude=47.3769&longitude=8.5417&hourly=temperature_2m,wind_speed_10m",
+        "method": "GET",
+        "headers": {},
+        "params": {},
+        "data": {},
+        "timeout": 5,
+        "response_format": "json"
+      },
+      "inputs": ["timer_weather"]
+    },
+    {
+      "id": "console_logger_weather",
+      "type": "console_logger",
+      "name": "console_logger_weather",
+      "params": { "prefix": "[WEATHER]" },
+      "inputs": ["api_weather"]
+    }
+  ]
+}

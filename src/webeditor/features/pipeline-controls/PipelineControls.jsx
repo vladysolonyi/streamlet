@@ -54,7 +54,7 @@ const PipelineControls = ({ config }) => {
     }
   }, []);
 
-  // WebSocket connection for telemetry
+  // Connect to pipeline telemetry
   useEffect(() => {
     if (!pipelineId) return;
 
@@ -64,7 +64,20 @@ const PipelineControls = ({ config }) => {
     addMessage(`Connecting to pipeline telemetry: ${pipelineId}`, "info");
 
     const removeListener = webSocketService.addListener((data) => {
-      // Add telemetry messages to debug console
+      // Handle connection acknowledgement messages
+      if (data.type === "connection_ack") {
+        const timeStr = new Date(data.server_time * 1000).toISOString();
+        addMessage(`Connected to server at ${timeStr}`, "success");
+        return;
+      }
+
+      // Handle other non-telemetry system messages
+      if (!data.metric) {
+        addMessage(JSON.stringify(data), "info");
+        return;
+      }
+
+      // Existing telemetry handling remains the same
       const metricMessage = `${data.node_id}: ${data.metric} ${
         data.value ? `(${data.value})` : ""
       }`;
@@ -82,13 +95,27 @@ const PipelineControls = ({ config }) => {
             message: data.value || "Error occurred",
           });
           break;
+        case "execution_time":
+          updateTelemetry(data.node_id, "execution_time", {
+            message: data.value || "Error occurred",
+          });
+          break;
+        case "fps":
+          updateTelemetry(data.node_id, "fps", {
+            count: data.value || 1,
+          });
+          break;
         case "data_rejected":
           updateTelemetry(data.node_id, "data_rejected", {
             count: data.value || 1,
           });
           break;
         default:
-          break;
+          // Log unhandled metrics
+          addMessage(
+            `[${data.node_id || "system"}] Unhandled metric: ${data.metric}`,
+            "debug"
+          );
       }
     });
 
@@ -254,50 +281,6 @@ const PipelineControls = ({ config }) => {
       addMessage(`Delete failed: ${err.message}`, "error");
     }
   };
-
-  useEffect(() => {
-    if (!pipelineId) return;
-
-    webSocketService.connect(pipelineId);
-
-    const handleTelemetry = (data) => {
-      // Handle all telemetry messages with consistent format
-      switch (data.metric) {
-        case "processing_start":
-          updateTelemetry(data.node_id, "processing_start");
-          break;
-        case "processing_end":
-          updateTelemetry(data.node_id, "processing_end");
-          break;
-        case "processing_error":
-          updateTelemetry(data.node_id, "processing_error", {
-            message: data.value || "Error occurred",
-          });
-          break;
-        case "data_rejected":
-          updateTelemetry(data.node_id, "data_rejected", {
-            count: data.value || 1,
-          });
-          break;
-        case "fps":
-          // Handled by FpsControl
-          break;
-        default:
-          // Log other metrics to debug console
-          addMessage(
-            `[${data.node_id || "system"}] ${data.metric}: ${data.value}`,
-            "log"
-          );
-      }
-    };
-
-    const removeListener = webSocketService.addListener(handleTelemetry);
-
-    return () => {
-      removeListener();
-      webSocketService.disconnect();
-    };
-  }, [pipelineId, updateTelemetry, addMessage]);
 
   const handleApplyUpdate = async () => {
     if (!pipelineId || pipelineStatus !== "running") return;

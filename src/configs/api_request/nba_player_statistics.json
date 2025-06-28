@@ -1,0 +1,37 @@
+{
+  "settings": { "fps_limit": 60 },
+  "nodes": [
+    {
+      "id": "timer_nba",
+      "type": "timer",
+      "name": "timer_nba",
+      "params": {
+        "interval": "30",
+        "use_textual": false
+      },
+      "inputs": []
+    },
+    {
+      "id": "api_nba",
+      "type": "api_request",
+      "name": "api_nba",
+      "params": {
+        "url": "https://www.balldontlie.io/api/v1/stats?per_page=100",
+        "method": "GET",
+        "headers": {},
+        "params": {},
+        "data": {},
+        "timeout": 4,
+        "response_format": "json"
+      },
+      "inputs": ["timer_nba"]
+    },
+    {
+      "id": "console_logger_nba",
+      "type": "console_logger",
+      "name": "console_logger_nba",
+      "params": { "prefix": "[NBA]" },
+      "inputs": ["api_nba"]
+    }
+  ]
+}

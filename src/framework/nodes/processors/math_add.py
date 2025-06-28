@@ -3,6 +3,7 @@ from framework.nodes.base_node import BaseNode
 from pydantic import BaseModel
 from framework.data.data_packet import DataPacket
 from framework.data.data_types import *
+from framework.core.decorators import node_telemetry
 
 class MathAddNode(BaseNode):
     node_type = "math_add"
@@ -17,6 +18,7 @@ class MathAddNode(BaseNode):
     class Params(BaseModel):
         strict_types: bool = True
 
+    @node_telemetry("process")
     def process(self):
         """Process packets from both inputs"""
         # Get the first packet from each input
