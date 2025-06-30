@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { getSmoothStepPath, BaseEdge } from "@xyflow/react";
 import { useTelemetry } from "../../../contexts/TelemetryContext";
 
-// Core animated edge: black idle, green while animating, beam circle runs on processing end
 const AnimatedEdge = ({
   id,
   source,
@@ -21,56 +20,82 @@ const AnimatedEdge = ({
     targetY,
     targetPosition,
   });
-  const { nodeTelemetry } = useTelemetry();
-  const isProcessing = nodeTelemetry[source]?.isProcessing;
-  const [animating, setAnimating] = useState(false);
-  const prevProcessing = useRef(isProcessing);
-  const animateRef = useRef(null);
-  const ANIM_DURATION_MS = 300;
 
-  // Trigger beam animation on processing end
+  const { nodeTelemetry } = useTelemetry();
+  const isProcessing = !!nodeTelemetry[source]?.isProcessing;
+
+  const [animating, setAnimating] = useState(false);
+  const prev = useRef(isProcessing);
+  const motionRef = useRef(null);
+
   useEffect(() => {
-    if (prevProcessing.current && !isProcessing) {
+    if (prev.current && !isProcessing) {
       setAnimating(true);
-      animateRef.current?.beginElement();
+      motionRef.current?.beginElement();
     }
-    prevProcessing.current = isProcessing;
+    prev.current = isProcessing;
   }, [isProcessing]);
 
-  // Reset animating state after duration
   useEffect(() => {
-    let timeout;
-    if (animating) {
-      timeout = setTimeout(() => setAnimating(false), ANIM_DURATION_MS);
-    }
-    return () => clearTimeout(timeout);
+    if (!animating) return;
+    const t = setTimeout(() => setAnimating(false), 4000); // match gradient animation
+    return () => clearTimeout(t);
   }, [animating]);
 
   return (
-    <>
+    <g className={`animated-edge${animating ? " is-animating" : ""}`}>
+      {/* Define a scrolling gradient */}
+      <defs>
+        <linearGradient
+          id={`edge-grad-${id}`}
+          x1="0%"
+          y1="0%"
+          x2="100%"
+          y2="0%"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0%" stopColor="var(--color-secondary)" />
+          <stop offset="25%" stopColor="var(--color-primary)" />
+          <stop offset="50%" stopColor="var(--color-secondary)" />
+          <stop offset="75%" stopColor="var(--color-primary)" />
+          <stop offset="100%" stopColor="var(--color-secondary)" />
+          {/* animate gradientShift by translating the gradient over time */}
+          <animateTransform
+            attributeName="gradientTransform"
+            type="translate"
+            from="-100,0"
+            to="100,0"
+            dur="0.3s"
+            repeatCount="indefinite"
+          />
+        </linearGradient>
+      </defs>
+
+      {/* Edge using either solid color or gradient */}
       <BaseEdge
         id={id}
         path={edgePath}
         style={{
-          stroke: animating ? "rgb(0, 255, 171)" : "#000",
+          stroke: animating
+            ? `url(#edge-grad-${id})`
+            : "var(--color-secondary)", // fallback or any static
           strokeWidth: 2,
         }}
       />
-      <circle r="5" fill="#00ffab" style={{ opacity: animating ? 1 : 0 }}>
-        <animateMotion
-          ref={animateRef}
-          begin="indefinite"
-          dur="0.3s"
-          calcMode="spline"
-          keyTimes="0;1"
-          keySplines=".4 0 .6 1"
-          path={edgePath}
-        />
-      </circle>
-    </>
+    </g>
   );
 };
 
-// Preserve original edge exports
 export const DefaultEdge = (props) => <AnimatedEdge {...props} />;
-export const ReferenceEdge = (props) => <AnimatedEdge {...props} />;
+export const ReferenceEdge = (props) => {
+  // leave reference-edge unchanged
+  const [edgePath] = getSmoothStepPath(props);
+  return (
+    <BaseEdge
+      id={props.id}
+      path={edgePath}
+      className="reference-edge-path"
+      style={{ stroke: "var(--color-info)", strokeDasharray: "5 5" }}
+    />
+  );
+};

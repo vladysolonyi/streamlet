@@ -5,14 +5,12 @@ import {
   useNodesState,
   useEdgesState,
   Controls,
-  useReactFlow,
   Background,
-  applyNodeChanges, // Add this import
+  useReactFlow,
 } from "@xyflow/react";
 import Node from "./Node";
 import { useDnD } from "../../../contexts/DnDContext";
 import { usePipeline } from "../../../contexts/PipelineContext";
-
 import {
   parseConfig,
   composeConfig,
@@ -23,279 +21,184 @@ import { ReferenceEdge, DefaultEdge } from "./Edge";
 import { useReferenceMonitor } from "../hooks/useReferenceMonitor";
 
 const AUTOSAVE_KEY = "pipeline_autosave";
-const NODE_TYPES_KEY = "nodeTypes";
+const IMPORTED_KEY = "importedConfigs";
 
 const FlowBoard = ({ onConfigChange }) => {
   const { type, nodeTypes } = useDnD();
   const reactFlowWrapper = useRef(null);
 
-  // Use the standard hook for nodes and edges state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const {
+    screenToFlowPosition,
+    setNodes: rfSetNodes,
+    setEdges: rfSetEdges,
+    getNodes,
+    getEdges,
+  } = useReactFlow();
   const { pipelineStatus, setHasChanges } = usePipeline();
-  // Define edge types
+  const [initialized, setInitialized] = useState(false);
+  const nodeCount = useRef(new Map());
+  const autosaveRef = useRef(null);
+
   const edgeTypes = useRef({
     default: DefaultEdge,
     straight: ReferenceEdge,
   }).current;
+
   useReferenceMonitor(nodes, setEdges);
 
-  const [initialized, setInitialized] = useState(false); // Track initialization status
+  // Drop‑zone state
+  const [isDragOverFlow, setIsDragOverFlow] = useState(false);
 
-  const { screenToFlowPosition } = useReactFlow();
-  const nodeCount = useRef(new Map());
-  const fileInputRef = useRef(null);
-  const autosaveIntervalRef = useRef(null);
-
-  // Add handler for node changes including selection
-  const handleNodesChange = useCallback(
-    (changes) => {
-      setNodes((nds) => applyNodeChanges(changes, nds));
-    },
-    [setNodes]
-  );
-
-  // Initialize with saved config
+  // Load initial or autosaved config
   useEffect(() => {
-    const savedConfig = localStorage.getItem(AUTOSAVE_KEY);
-    let configToLoad = getEmptyConfig();
-
-    if (savedConfig) {
+    let cfg = getEmptyConfig();
+    const saved = localStorage.getItem(AUTOSAVE_KEY);
+    if (saved) {
       try {
-        configToLoad = JSON.parse(savedConfig);
-        console.log("Loaded saved config from localStorage");
-      } catch (error) {
-        console.error("Error loading saved config:", error);
-        configToLoad = getEmptyConfig();
-      }
+        cfg = JSON.parse(saved);
+      } catch {}
     }
-
-    // Always load config even if server is offline
-    const { initialNodes, initialEdges } = parseConfig(configToLoad, nodeTypes);
-
+    const { initialNodes, initialEdges } = parseConfig(cfg, nodeTypes);
     setNodes(initialNodes);
     setEdges(initialEdges);
-
-    // Update node counter
-    initialNodes.forEach((node) => {
-      const type = node.type;
-      const match = node.id.match(/_(\d+)$/);
-      const count = match ? parseInt(match[1]) : 0;
-      if (count > (nodeCount.current.get(type) || 0)) {
-        nodeCount.current.set(type, count);
-      }
+    initialNodes.forEach((n) => {
+      const m = n.id.match(/_(\d+)$/);
+      const count = m ? +m[1] : 0;
+      if (count > (nodeCount.current.get(n.type) || 0))
+        nodeCount.current.set(n.type, count);
     });
-
     setInitialized(true);
-  }, [nodeTypes]); // Only run when nodeTypes change
+  }, [nodeTypes, setNodes, setEdges]);
 
-  // Setup autosave after initialization
+  // Autosave
   useEffect(() => {
     if (!initialized) return;
-
-    autosaveIntervalRef.current = setInterval(() => {
-      const currentConfig = composeConfig(nodes, edges);
-      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(currentConfig));
+    autosaveRef.current = setInterval(() => {
+      const cfg = composeConfig(nodes, edges);
+      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(cfg));
     }, 1000);
+    return () => clearInterval(autosaveRef.current);
+  }, [initialized, nodes, edges]);
 
-    return () => {
-      if (autosaveIntervalRef.current) {
-        clearInterval(autosaveIntervalRef.current);
-      }
-    };
-  }, [nodes, edges, initialized]);
-
-  // Add this useEffect to reset changes when pipeline stops
+  // Notify parent
   useEffect(() => {
-    console.log("Pipeline status changed:", pipelineStatus);
+    onConfigChange?.(composeConfig(nodes, edges));
+  }, [nodes, edges, onConfigChange]);
+
+  // Reset pipeline change flag
+  useEffect(() => {
     if (pipelineStatus !== "running") {
       setHasChanges(false);
     }
-  }, [pipelineStatus]);
+  }, [pipelineStatus, setHasChanges]);
 
-  // Notify parent about config changes
-  useEffect(() => {
-    if (typeof onConfigChange === "function") {
-      const currentConfig = composeConfig(nodes, edges);
-      onConfigChange(currentConfig);
-    }
-  }, [nodes, edges, onConfigChange]);
-
-  const getDefaultName = (nodeType) => {
-    const count = (nodeCount.current.get(nodeType) || 0) + 1;
-    nodeCount.current.set(nodeType, count);
-    return `${nodeType}_${count}`;
-  };
+  const getDefaultName = useCallback((t) => {
+    const next = (nodeCount.current.get(t) || 0) + 1;
+    nodeCount.current.set(t, next);
+    return `${t}_${next}`;
+  }, []);
 
   const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
-    []
+    (p) => setEdges((es) => addEdge(p, es)),
+    [setEdges]
   );
 
-  const onDragOver = useCallback((event) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
+  const onDragOver = useCallback((e) => {
+    // allow drops
+    e.preventDefault();
+    const payload = e.dataTransfer.types.includes("text/plain");
+    if (payload) setIsDragOverFlow(true);
+  }, []);
+
+  const onDragLeave = useCallback(() => {
+    setIsDragOverFlow(false);
   }, []);
 
   const onDrop = useCallback(
-    (event) => {
-      event.preventDefault();
+    (e) => {
+      e.preventDefault();
+      setIsDragOverFlow(false);
+
+      // Check for a config name
+      const name = e.dataTransfer.getData("text/plain");
+      if (!name) return;
+
+      // Try to load from localStorage
+      let imported = {};
+      try {
+        imported = JSON.parse(localStorage.getItem(IMPORTED_KEY)) || {};
+      } catch {}
+
+      const cfg = imported[name];
+      if (!cfg) return;
+
+      // Parse and replace
+      const { initialNodes, initialEdges } = parseConfig(cfg, nodeTypes);
+      rfSetNodes(initialNodes);
+      rfSetEdges(initialEdges);
+      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(cfg));
+    },
+    [nodeTypes, rfSetNodes, rfSetEdges]
+  );
+
+  const onDropNewNode = useCallback(
+    (e) => {
+      // existing node-drop logic
+      e.preventDefault();
       if (!type) return;
-
-      const position = screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY,
+      const pos = screenToFlowPosition({
+        x: e.clientX,
+        y: e.clientY,
       });
-
-      const nodeName = getDefaultName(type);
-      const nodeSchema = nodeTypes[type]?.params_schema;
-      const defaultParams = Object.fromEntries(
-        Object.entries(nodeSchema?.properties || {}).map(([key, def]) => [
-          key,
+      const name = getDefaultName(type);
+      const schema = nodeTypes[type]?.params_schema;
+      const defaults = Object.fromEntries(
+        Object.entries(schema?.properties || {}).map(([k, def]) => [
+          k,
           def.default,
         ])
       );
-
-      const newNode = {
-        id: nodeName,
-        type: type,
-        position,
-        data: {
-          label: nodeName,
-          params: defaultParams,
-          paramsSchema: nodeSchema,
-        },
-      };
-
-      setNodes((nds) => nds.concat(newNode));
+      rfSetNodes((ns) =>
+        ns.concat({
+          id: name,
+          type,
+          position: pos,
+          data: { label: name, params: defaults, paramsSchema: schema },
+        })
+      );
     },
-    [screenToFlowPosition, type, nodeTypes]
-  );
-
-  const handleNewConfig = useCallback(() => {
-    if (
-      window.confirm(
-        "Are you sure you want to create a new config? This will clear the current board and remove autosaved data."
-      )
-    ) {
-      setNodes([]);
-      setEdges([]);
-      nodeCount.current = new Map();
-      localStorage.removeItem(AUTOSAVE_KEY);
-    }
-  }, [setNodes, setEdges]);
-
-  const handleExportToFile = useCallback(() => {
-    const currentConfig = composeConfig(nodes, edges);
-    const dataStr = JSON.stringify(currentConfig, null, 2);
-    const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(
-      dataStr
-    )}`;
-
-    const exportFileDefaultName = `pipeline_config_${new Date()
-      .toISOString()
-      .slice(0, 10)}.json`;
-    const linkElement = document.createElement("a");
-    linkElement.setAttribute("href", dataUri);
-    linkElement.setAttribute("download", exportFileDefaultName);
-    linkElement.click();
-  }, [nodes, edges]);
-
-  const handleImportConfig = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
-
-  const handleFileChange = useCallback(
-    (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const importedConfig = JSON.parse(e.target.result);
-          const { initialNodes, initialEdges } = parseConfig(
-            importedConfig,
-            nodeTypes
-          );
-
-          setNodes(initialNodes);
-          setEdges(initialEdges);
-
-          // Update node counter
-          initialNodes.forEach((node) => {
-            const type = node.type;
-            const match = node.id.match(/_(\d+)$/);
-            const count = match ? parseInt(match[1]) : 0;
-            if (count > (nodeCount.current.get(type) || 0)) {
-              nodeCount.current.set(type, count);
-            }
-          });
-
-          // Save to localStorage
-          localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(importedConfig));
-        } catch (error) {
-          console.error("Error parsing config file:", error);
-          alert(`Error importing config: ${error.message}`);
-        }
-      };
-      reader.readAsText(file);
-      event.target.value = ""; // Reset input
-    },
-    [nodeTypes, setNodes, setEdges]
+    [type, nodeTypes, screenToFlowPosition, getDefaultName, rfSetNodes]
   );
 
   return (
-    <div className="reactflow-wrapper" ref={reactFlowWrapper}>
-      {/* Hidden file input for config import */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        style={{ display: "none" }}
-        accept=".json"
-        onChange={handleFileChange}
-      />
-
-      {/* Config management buttons */}
-      <div className="config-controls">
-        <button
-          onClick={handleNewConfig}
-          className="config-btn"
-          title="Clear board and start fresh"
-        >
-          New
-        </button>
-        <button
-          onClick={handleImportConfig}
-          className="config-btn"
-          title="Import pipeline config"
-        >
-          Import
-        </button>
-        <button
-          onClick={handleExportToFile}
-          className="config-btn"
-          title="Export current config"
-        >
-          Export
-        </button>
-      </div>
-
+    <div
+      className={
+        "reactflow-wrapper" + (isDragOverFlow ? " reactflow-wrapper--over" : "")
+      }
+      ref={reactFlowWrapper}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={handleNodesChange}
+        onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onDrop={onDrop}
-        onDragOver={onDragOver}
-        nodeTypes={Object.keys(nodeTypes).reduce((acc, nodeType) => {
-          acc[nodeType] = Node;
-          return acc;
-        }, {})}
-        edgeTypes={edgeTypes} // Add this
+        // Node‑drop uses separate handler
+        onDrop={onDropNewNode}
+        onDragOver={(e) => {
+          // prevent default so node-drop also works
+          e.preventDefault();
+        }}
+        nodeTypes={Object.fromEntries(
+          Object.keys(nodeTypes).map((t) => [t, Node])
+        )}
+        edgeTypes={edgeTypes}
         fitView
-        style={{ backgroundColor: "#F7F9FB" }}
         nodesDraggable
         nodesConnectable
         elementsSelectable

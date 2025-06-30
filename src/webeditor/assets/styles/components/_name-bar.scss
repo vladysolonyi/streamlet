@@ -1,0 +1,23 @@
+@import "../abstracts/variables";
+
+.name-bar {
+  grid-area: name;
+  background-color: $bg-semidark;
+  color: $color-light;
+
+  text-align: center;
+  font-size: $font-size-md;
+  padding: $gap-md;
+  user-select: none;
+
+  div {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}

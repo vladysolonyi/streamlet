@@ -1,0 +1,26 @@
+@import "../abstracts/variables";
+
+// Box-sizing reset
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+// Utility classes
+.u-hidden {
+  display: none !important;
+}
+.u-mb-sm {
+  margin-bottom: $gap-sm !important;
+}
+.u-mb-md {
+  margin-bottom: $gap-md !important;
+}
+.u-flex {
+  display: flex !important;
+}
+.u-center {
+  justify-content: center;
+  align-items: center;
+}

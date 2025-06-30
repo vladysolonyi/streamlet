@@ -1,0 +1,56 @@
+@import "../abstracts/variables";
+
+.server-status {
+  display: flex;
+  align-items: center;
+  gap: $gap-md;
+  font-size: $font-size-sm;
+  padding: $gap-sm $gap-md;
+  background: $bg-dark;
+
+  .status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+
+    &.online {
+      background-color: $color-success;
+      box-shadow: 0 0 8px rgba($color-success, 0.7);
+    }
+    &.offline {
+      background-color: $color-danger;
+      box-shadow: 0 0 8px rgba($color-danger, 0.7);
+    }
+    &.loading {
+      background-color: $color-warning;
+      animation: pulse 1.5s infinite;
+    }
+  }
+
+  .status-content {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+
+    .status-text {
+      font-weight: 500;
+      color: $color-light;
+    }
+
+    .connection-time {
+      font-size: $font-size-xs;
+      color: $color-secondary;
+      margin-top: 2px;
+    }
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}

@@ -1,0 +1,67 @@
+@import "../abstracts/variables";
+
+.node-catalog {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: $bg-dark;
+}
+
+.catalog {
+  height: 100%;
+  padding-top: $gap-md;
+}
+
+.catalog__folder {
+  width: 100%;
+}
+
+.catalog__folder-toggle {
+  font-family: $font-mono;
+  font-weight: bold;
+  color: $color-light;
+  width: 100%;
+  background: none;
+  border: none;
+  font-size: $font-size-md;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: $gap-sm;
+
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+.catalog__list {
+  list-style: none;
+  margin: 0 $gap-md;
+  padding: 0 $gap-md;
+  border-left: $gap-xs dotted $border;
+}
+
+.catalog__item {
+  color: $color-light;
+  padding: $gap-sm 0;
+  cursor: pointer;
+
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+/* Node list */
+.node-catalog__nodes {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dndnode {
+  padding: 6px 10px;
+  border: 1px solid $border;
+  border-radius: 4px;
+  cursor: grab;
+}

@@ -1,0 +1,65 @@
+@import "../abstracts/variables";
+
+.flow-board {
+  .react-flow__node {
+    border: 1px solid $border;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: $font-size-md;
+    color: $color-light;
+    background: $bg-dark;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: box-shadow 0.2s;
+    &.selected {
+      box-shadow: 0 0 0 4px rgba(255, 0, 115, 0.3);
+    }
+    &:hover {
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+    .react-flow__handle {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: $border;
+    }
+  }
+
+  .status-border-wrapper {
+    border-radius: 8px;
+    padding: 2px;
+    &.processing {
+      box-shadow: 0 0 0 4px $color-success;
+    }
+    &.error {
+      animation: error-blink 0.5s;
+    }
+    &.rejected {
+      animation: rejected-blink 0.5s;
+    }
+  }
+}
+
+@keyframes error-blink {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 8px $color-warning;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+}
+
+@keyframes rejected-blink {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 8px $color-danger;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+}

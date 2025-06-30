@@ -1,0 +1,82 @@
+@import "../abstracts/variables";
+
+.debug-console {
+  background-color: $bg-dark;
+  height: 100%;
+  color: $bg-dark;
+  border-radius: 4px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+
+  .console-header {
+    display: flex;
+    justify-content: space-between;
+    font-family: $font-base;
+    color: $bg-semidark;
+    background: $bg-dark;
+    padding: $gap-sm;
+    font-size: $font-size-md;
+    font-weight: bold;
+    border-bottom: 1px solid rgba($bg-semidark, 1);
+  }
+
+  .console-controls button {
+    background: $bg-dark;
+    color: $color-secondary;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    &:hover {
+      background: #444;
+    }
+  }
+
+  .console-output {
+    font-family: $font-mono;
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: #2d2d2d;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #555;
+      border-radius: 3px;
+      &:hover {
+        background: #777;
+      }
+    }
+  }
+
+  .console-line {
+    padding: 3px 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+
+    &.log {
+      color: $color-secondary;
+    }
+    &.info {
+      color: $color-info;
+    }
+    &.warn {
+      color: $color-warning;
+    }
+    &.error {
+      color: $color-danger;
+    }
+
+    .timestamp {
+      color: $color-info;
+    }
+  }
+}

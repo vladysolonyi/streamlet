@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { Icon, Icons } from "../../assets/icons";
 import { useTelemetry } from "../../contexts/TelemetryContext";
 import { webSocketService } from "../../services/websocket";
 import { usePipeline } from "../../contexts/PipelineContext";
 import { useDebugConsole } from "../../contexts/DebugConsoleContext"; // Add this import
 import { useServerStatus } from "../../contexts/ServerStatusContext";
-import FpsControl from "./FPSControl";
 
 const API_KEY = "SECRET_KEY";
 
@@ -346,67 +346,66 @@ const PipelineControls = ({ config }) => {
   };
 
   return (
-    <div className="pipeline-controls">
-      {!serverOnline && (
-        <div className="server-warning">
-          ⚠️ Server is offline - controls disabled
-        </div>
-      )}
-
-      {error && <div className="error-message">{error}</div>}
-
+    <div
+      className={`pipeline-controls--floating status-${
+        pipelineStatus == "not created" ? "not-created" : pipelineStatus
+      }`}
+    >
       <div className="controls-row">
         <button
           onClick={handleInitialize}
           disabled={!serverOnline || pipelineStatus !== "not created"}
+          title="Initialize"
         >
-          Initialize
+          <Icon icon={Icons.init} width="20" height="20" /> Initialize
         </button>
         <button
           onClick={handleStart}
           disabled={
             !serverOnline || !pipelineId || pipelineStatus === "running"
           }
+          title="Start"
         >
-          Start
+          <Icon icon={Icons.start} width="20" height="20" /> Start
         </button>
         <button
           onClick={handleStop}
           disabled={
             !serverOnline || !pipelineId || pipelineStatus !== "running"
           }
+          title="Stop"
         >
-          Stop
+          <Icon icon={Icons.stop} width="20" height="20" /> Stop
         </button>
-
         {pipelineStatus === "running" && hasChanges && !autoUpdate && (
-          <button onClick={handleApplyUpdate} className="apply-button">
-            Apply Changes
+          <button
+            onClick={handleApplyUpdate}
+            className="apply-button"
+            title="Apply Changes"
+          >
+            <Icon icon={Icons.rerun} width="20" height="20" /> Apply
           </button>
         )}
       </div>
 
       <div className="status-row">
-        <div className="pipeline-status">Status: {pipelineStatus}</div>
-
+        <span>
+          Status: <strong>{pipelineStatus}</strong>
+        </span>
         {pipelineStatus === "running" && (
-          <label className="auto-update-toggle">
+          <label>
             <input
               type="checkbox"
               checked={autoUpdate}
               onChange={toggleAutoUpdate}
-            />
-            Auto Update
+            />{" "}
+            Auto‑update
           </label>
         )}
       </div>
 
-      {pipelineStatus === "running" && hasChanges && (
-        <div className="changes-indicator">
-          {autoUpdate ? "Applying changes..." : "Unapplied changes!"}
-        </div>
-      )}
-      <FpsControl />
+      {!serverOnline && <div className="server-warning">⚠️ Server offline</div>}
+      {error && <div className="error-message">{error}</div>}
     </div>
   );
 };

@@ -1,0 +1,96 @@
+// 1. Abstracts
+@import "abstracts/variables";
+@import "abstracts/mixins";
+
+// 2. Base
+@import "base/reset";
+@import "base/typography";
+@import "base/utilities";
+
+// 3. Layout
+@import "layout/app-layout";
+
+// 4. Components
+@import "components/flowboard";
+@import "components/flowboard-node";
+@import "components/flowboard-edge";
+
+@import "components/debug-console";
+@import "components/fps-control";
+@import "components/server-status";
+@import "components/properties-panel";
+@import "components/pipeline-controls";
+@import "components/node-catalog";
+@import "components/config-panel";
+@import "components/name-bar";
+@import "layout/panels";
+@import "components/logo-panel";
+
+// 1) Define the keyframes for expanding the gradient
+@keyframes gradient-expand {
+  0% {
+    /* start with a tiny gradient in the center */
+    background-size: 200% 200%;
+  }
+  100% {
+    /* end with a large gradient that covers the viewport */
+    background-size: 0% 0%;
+  }
+}
+
+// 2) Apply it to your root element (html or body)
+html,
+body {
+  height: 100%;
+  padding: $gap-sm;
+  /* base fallback color */
+  background-color: $bg-black;
+  color: $color-secondary;
+
+  /* the animated gradient */
+  background-image: radial-gradient(
+    circle at center,
+    $color-primary 0%,
+    $color-dark 35%,
+    $bg-black 100%
+  );
+  background-repeat: no-repeat;
+  background-position: center center;
+  /* initial tiny size */
+  background-size: 0% 0%;
+
+  /* fire the animation once on page load */
+  animation: gradient-expand 1.5s ease-out forwards;
+}
+
+button {
+  display: flex;
+  align-items: center;
+  gap: $gap-sm;
+  background: none;
+  border: none;
+  color: $color-light;
+  font-size: $font-size-sm;
+  padding: $gap-sm $gap-md;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover:not(:disabled) {
+    color: $color-primary;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.apply-button {
+    background: $color-primary;
+    color: $color-secondary;
+
+    &:hover {
+      background: darken($color-primary, 10%);
+    }
+  }
+}

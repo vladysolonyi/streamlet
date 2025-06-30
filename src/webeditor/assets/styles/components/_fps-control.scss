@@ -1,0 +1,55 @@
+@import "../abstracts/variables";
+
+.fps-control {
+  background-color: $bg-dark;
+  color: $color-secondary;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: $gap-lg;
+
+  .fps-input-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: $gap-md;
+
+    label {
+      font-weight: 500;
+      margin-right: $gap-md;
+      min-width: 80px;
+    }
+    input {
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: $font-size-md;
+      text-align: center;
+      background-color: $bg-semidark;
+      color: $color-secondary;
+    }
+  }
+
+  .fps-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: $gap-md;
+    background-color: $bg-medium;
+    border-radius: 6px;
+
+    .fps-value {
+      font-size: 1.4rem;
+      font-weight: bold;
+      display: flex;
+      align-items: baseline;
+      .fps-unit {
+        font-size: 0.9rem;
+        font-weight: normal;
+        margin-left: $gap-sm;
+      }
+    }
+
+    .fps-limit {
+      font-size: 0.85rem;
+      margin-top: $gap-sm;
+    }
+  }
+}

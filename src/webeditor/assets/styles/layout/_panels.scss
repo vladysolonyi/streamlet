@@ -1,0 +1,26 @@
+@import "../abstracts/variables";
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  background: $bg-semidark;
+  overflow: hidden;
+  color: $bg-semidark;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid $border;
+
+  &__header {
+    font-family: $font-base;
+    background: $bg-dark;
+    padding: $gap-sm;
+    font-size: $font-size-md;
+    font-weight: bold;
+    border-bottom: 1px solid rgba($bg-semidark, 1);
+  }
+
+  &__body {
+    flex: 1;
+    overflow: auto;
+  }
+}

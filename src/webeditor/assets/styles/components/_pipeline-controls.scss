@@ -1,0 +1,155 @@
+@import "../abstracts/variables";
+
+.pipeline-controls--floating {
+  position: fixed;
+  bottom: $gap-xxl;
+  left: 50%;
+  transform: translateX(-50%);
+  background: $bg-dark;
+  padding: $gap-md;
+  border-radius: $border-radius-xxl;
+  color: $color-light;
+  z-index: 1000;
+  overflow: visible; // allow pseudo‑border to show
+
+  // Create the animated gradient border via a ::before pseudo
+  &::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: $border-radius-xxl + 2px;
+    background: transparent;
+    z-index: -1;
+    // background: linear-gradient(
+    //   90deg,
+    //   $color-info,
+    //   $color-success,
+    //   $color-warning,
+    //   $color-danger,
+    //   $color-info
+    // );
+    background-size: 400% 400%;
+    animation: gradient-rotate 8s linear infinite;
+    mask: 
+      /* keep only the border: */ linear-gradient(#fff 0 0)
+        content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: destination-out;
+    padding: 1px;
+  }
+
+  // If you want to pause or tint the gradient per state:
+  &.status-not-created {
+    &::before {
+      animation-play-state: paused;
+      background: $color-secondary;
+    }
+  }
+  &.status-created {
+    &::before {
+      background: $color-info;
+    }
+  }
+  &.status-running {
+    &::before {
+      background: $color-success;
+    }
+  }
+  &.status-stopped {
+    &::before {
+      animation-play-state: paused;
+      background: $color-secondary;
+    }
+  }
+  &.status-error {
+    &::before {
+      animation-play-state: paused;
+      background: $color-danger;
+    }
+  }
+
+  @keyframes gradient-rotate {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .controls-row {
+    display: flex;
+    justify-content: center;
+    gap: $gap-sm;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: $gap-sm;
+      background: none;
+      border: none;
+      color: inherit;
+      padding: $gap-sm $gap-md;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+
+      &:hover:not(:disabled) {
+        color: $color-primary;
+      }
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      &.apply-button {
+        background: $color-primary;
+        color: #fff;
+        &:hover {
+          background: darken($color-primary, 10%);
+        }
+      }
+    }
+  }
+
+  .status-row {
+    margin-top: $gap-sm;
+    font-size: $font-size-xs;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    label {
+      font-size: inherit;
+      cursor: pointer;
+      input {
+        margin-right: $gap-sm;
+        accent-color: $color-primary;
+      }
+    }
+  }
+
+  .server-warning,
+  .error-message {
+    margin-top: $gap-sm;
+    padding: $gap-sm $gap-md;
+    border-radius: 4px;
+    font-size: $font-size-xs;
+    &.server-warning {
+      background: $color-warning;
+      color: $bg-black;
+    }
+    &.error-message {
+      background: $color-danger;
+      color: #fff;
+    }
+  }
+}

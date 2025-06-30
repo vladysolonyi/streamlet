@@ -1,0 +1,58 @@
+@import "../abstracts/variables";
+
+.grid-layout {
+  display: grid;
+  grid-template-columns: 20% 1fr 20%;
+  grid-template-rows: 4% 1fr 1fr 20%;
+  grid-template-areas:
+    "logo name status"
+    "configPanel flowBoard nodeParams"
+    "node-catalog flowBoard debug"
+    "settings flowBoard debug";
+  height: calc(100vh - $gap-md * 2);
+  gap: $gap-md;
+
+  > .logo {
+    grid-area: logo;
+    background: $bg-dark;
+  }
+  > .node-catalog {
+    grid-area: node-catalog;
+    background: $bg-dark;
+  }
+  > .config-panel {
+    grid-area: configPanel;
+    background: $bg-dark;
+  }
+  > .settings {
+    grid-area: settings;
+    background: $bg-dark;
+  }
+  > .name-bar {
+    grid-area: name;
+    background: $bg-dark;
+  }
+  > .flow-board {
+    grid-area: flowBoard;
+    background: $bg-dark;
+  }
+  > .node-params {
+    grid-area: nodeParams;
+    background: $bg-dark;
+  }
+
+  > .debug-console {
+    grid-area: debug;
+    background: $bg-dark;
+  }
+
+  > .status {
+    grid-area: status;
+    background: $bg-dark;
+  }
+
+  // > .pipeline-controls {
+  //   grid-area: controls;
+  //   background: $bg-dark;
+  // }
+}

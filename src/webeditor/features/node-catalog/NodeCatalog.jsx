@@ -1,45 +1,77 @@
-import React from "react";
+import React, { useState } from "react";
 import { useDnD } from "../../contexts/DnDContext";
 
-const CATEGORY_CLASS_MAP = {
-  exporters: "output",
-  loaders: "input",
+const CATEGORY_LABELS = {
+  exporters: "exporters",
+  loaders: "loaders",
+  processors: "processors",
 };
 
 const NodeCatalog = () => {
-  const { setType, nodeTypes } = useDnD(); // Removed setNodeTypes
+  const { setType, nodeTypes } = useDnD();
+  const [openFolders, setOpenFolders] = useState({});
 
-  const onDragStart = (event, nodeType) => {
-    setType(nodeType);
-    event.dataTransfer.effectAllowed = "move";
+  // Group nodeTypes by category
+  const grouped = Object.entries(nodeTypes).reduce((acc, [type, data]) => {
+    const cat = data.category || "uncategorized";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push({ type, label: formatName(type) });
+    return acc;
+  }, {});
+
+  const toggleFolder = (cat) => {
+    setOpenFolders((o) => ({ ...o, [cat]: !o[cat] }));
   };
 
-  const formatName = (name) => {
+  function onDragStart(e, nodeType) {
+    setType(nodeType);
+    e.dataTransfer.effectAllowed = "move";
+  }
+
+  function formatName(name) {
     return name
       .replace(/_/g, " ")
       .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase());
-  };
+  }
 
-  // No loading state needed - nodeTypes come from context
-  if (Object.keys(nodeTypes).length === 0) {
-    return <div>No node types available. Please check your connection.</div>;
+  if (Object.keys(grouped).length === 0) {
+    return (
+      <div className="catalog__empty">
+        No node types available. Please check your connection.
+      </div>
+    );
   }
 
   return (
-    <>
-      {Object.entries(nodeTypes).map(([nodeType, data]) => (
-        <div
-          key={nodeType}
-          className={`dndnode ${CATEGORY_CLASS_MAP[data.category] || ""} ${
-            data.category
-          }`}
-          onDragStart={(e) => onDragStart(e, nodeType)}
-          draggable
-        >
-          {formatName(nodeType)}
+    <div className="catalog">
+      {Object.entries(grouped).map(([cat, items]) => (
+        <div key={cat} className="catalog__folder">
+          <button
+            type="button"
+            className="catalog__folder-toggle"
+            onClick={() => toggleFolder(cat)}
+          >
+            {openFolders[cat] ? "-" : "+"}
+            {""}
+            {CATEGORY_LABELS[cat] || formatName(cat)}
+          </button>
+          {openFolders[cat] && (
+            <ul className="catalog__list">
+              {items.map(({ type, label }) => (
+                <li
+                  key={type}
+                  className="catalog__item"
+                  draggable
+                  onDragStart={(e) => onDragStart(e, type)}
+                >
+                  {label}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       ))}
-    </>
+    </div>
   );
 };
 

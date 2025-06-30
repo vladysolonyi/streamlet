@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 
-import "./assets/index.css";
+import "./assets/styles/main.scss";
 
 const container = document.querySelector("#app");
 const root = createRoot(container);

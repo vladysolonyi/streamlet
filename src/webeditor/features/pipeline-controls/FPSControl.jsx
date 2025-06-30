@@ -71,18 +71,6 @@ const FpsControl = () => {
           disabled={pipelineStatus !== "not created"}
         />
       </div>
-
-      {pipelineStatus === "running" && (
-        <div className="fps-display">
-          <div className="fps-value">
-            {isStale ? "─" : currentFps.toFixed(1)}
-            <span className="fps-unit">fps</span>
-          </div>
-          <div className="fps-limit">
-            (Target: {lastAppliedConfig?.settings?.fps_limit || fpsLimit})
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,0 +1,94 @@
+@import "../abstracts/variables";
+
+.config-panel__container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: $gap-md;
+  background: $bg-dark;
+  border-radius: 6px;
+  overflow-y: auto;
+  color: $color-light;
+  font-family: $font-base;
+}
+
+.config-panel__actions {
+  display: flex;
+  gap: $gap-sm;
+  margin-bottom: $gap-md;
+  flex-wrap: wrap;
+}
+
+.config-panel__input {
+  display: none;
+}
+
+.config-panel__saved {
+  margin-top: $gap-md;
+
+  .config-panel__heading {
+    font-size: $font-size-md;
+    font-weight: bold;
+    margin-bottom: $gap-sm;
+    color: $color-light;
+  }
+
+  .config-panel__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $gap-sm;
+
+    .config-panel__saved-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: $bg-dark;
+      border: 1px solid $border;
+      padding: $gap-sm;
+      border-radius: 4px;
+      font-size: $font-size-sm;
+      color: $color-light;
+
+      &:hover {
+        color: $color-primary;
+      }
+
+      .config-panel__name {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding-right: $gap-sm;
+      }
+
+      .config-panel__small-btn {
+        background: none;
+        border: none;
+        color: $color-light;
+        font-size: $font-size-sm;
+        cursor: pointer;
+
+        &:hover {
+          color: $color-primary;
+        }
+      }
+    }
+  }
+}
+
+.config-panel__save-input {
+  margin-top: $gap-sm;
+  padding: 6px 10px;
+  background-color: $bg-semidark;
+  border: 1px solid $border;
+  border-radius: 4px;
+  color: $color-light;
+  font-size: $font-size-sm;
+
+  &::placeholder {
+    color: $color-secondary;
+  }
+}

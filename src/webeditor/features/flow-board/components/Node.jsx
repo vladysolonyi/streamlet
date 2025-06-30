@@ -4,7 +4,7 @@ import { useTelemetry } from "../../../contexts/TelemetryContext";
 
 const MIN_PROCESSING_DURATION = 100; // Minimum display time in ms
 
-const Node = ({ id, data, selected }) => {
+const Node = ({ id, data, selected, node_type }) => {
   const { nodeTelemetry } = useTelemetry();
   const nodeData = nodeTelemetry[id] || {};
   const [showProcessing, setShowProcessing] = useState(false);

@@ -1,0 +1,150 @@
+@import "../abstracts/variables";
+
+.properties-panel {
+  height: 100%;
+  background-color: $bg-dark;
+  border-radius: 4px;
+  padding: $gap-lg;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  color: $color-light;
+  display: flex;
+  flex-direction: column;
+
+  .panel-header {
+    position: relative;
+    padding-bottom: $gap-md;
+    border-bottom: 1px solid $bg-semidark;
+    margin-bottom: $gap-lg;
+
+    .node-name-display {
+      display: flex;
+      align-items: center;
+      gap: $gap-md;
+      cursor: pointer;
+      padding: $gap-sm $gap-md;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: $bg-semidark;
+      }
+
+      h3 {
+        margin: 0;
+        font-size: $font-size-lg;
+        color: $color-light;
+      }
+
+      .edit-icon {
+        font-size: 1.1em;
+        opacity: 0.7;
+        color: $color-secondary;
+      }
+    }
+
+    .node-type {
+      margin-top: $gap-sm;
+      font-size: $font-size-sm;
+      color: $color-secondary;
+    }
+  }
+
+  .panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: $gap-md;
+
+    .property-group {
+      margin-bottom: $gap-md;
+
+      .property-label {
+        display: block;
+        margin-bottom: $gap-sm;
+        font-size: $font-size-sm;
+        color: $color-info;
+      }
+
+      .property-input-container {
+        input.property-input {
+          width: 100%;
+          padding: $gap-sm $gap-md;
+          background-color: $bg-semidark;
+          border: 1px solid $bg-semidark;
+          border-radius: 4px;
+          font-size: $font-size-md;
+          color: $color-light;
+
+          &::placeholder {
+            color: $color-secondary;
+          }
+
+          &:focus {
+            outline: none;
+            border-color: $color-primary;
+            box-shadow: 0 0 0 2px rgba($color-primary, 0.3);
+          }
+        }
+
+        .property-checkbox {
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+
+          input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            margin-right: $gap-sm;
+            accent-color: $color-primary;
+            cursor: pointer;
+          }
+
+          span {
+            font-size: $font-size-sm;
+            color: $color-light;
+          }
+        }
+      }
+    }
+  }
+
+  .references-section {
+    margin-top: $gap-lg;
+    border-top: 1px solid $bg-semidark;
+    padding-top: $gap-md;
+
+    h4 {
+      margin: 0 0 $gap-md 0;
+      font-size: $font-size-md;
+      color: $color-warning;
+    }
+
+    .references-group {
+      margin-bottom: $gap-md;
+
+      h5 {
+        margin: 0 0 $gap-sm 0;
+        font-size: $font-size-sm;
+        color: $color-info;
+      }
+
+      .reference-item {
+        display: flex;
+        gap: $gap-md;
+        padding: $gap-sm $gap-md;
+        background: $bg-semidark;
+        border-radius: 4px;
+        margin-bottom: $gap-sm;
+
+        .reference-node {
+          font-weight: bold;
+          color: $color-primary;
+        }
+
+        .reference-path {
+          font-style: italic;
+          color: $color-secondary;
+        }
+      }
+    }
+  }
+}

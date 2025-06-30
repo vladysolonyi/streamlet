@@ -1,0 +1,39 @@
+@import "../abstracts/variables";
+@import "../abstracts/mixins";
+
+.flow-board {
+  position: relative;
+  background: $bg-black;
+  overflow: hidden;
+
+  // React Flow wrapper
+  .reactflow-wrapper {
+    width: 100%;
+    height: 100%;
+  }
+
+  .reactflow-wrapper--over {
+    border: 1px solid $border;
+  }
+
+  .react-flow__pane {
+    background: $bg-black;
+  }
+  .react-flow__panel {
+    background: $bg-black;
+  }
+
+  .react-flow__panel button {
+    background: $bg-dark;
+    color: $color-secondary;
+    width: 100%;
+    background: none;
+    border: none;
+    font-size: $font-size-md;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: $gap-sm;
+  }
+}

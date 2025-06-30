@@ -1,0 +1,18 @@
+@import "../abstracts/variables";
+
+/* The group wrapper */
+.animated-edge {
+  /* default edge color */
+  & > path.react-flow__edge-path {
+    stroke: $color-secondary;
+    stroke-width: 2;
+  }
+}
+
+/* Reference edges get their own styling */
+.reference-edge-path {
+  &.react-flow__edge-path {
+    stroke: $color-info;
+    stroke-dasharray: 5 5;
+  }
+}

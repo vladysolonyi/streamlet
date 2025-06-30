@@ -1,8 +1,17 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useServerStatus } from "../../contexts/ServerStatusContext";
 
 const ServerStatusIndicator = () => {
   const { serverOnline, loading } = useServerStatus();
+  const [connectionTime, setConnectionTime] = useState(null);
+
+  useEffect(() => {
+    if (serverOnline) {
+      setConnectionTime(new Date());
+    } else {
+      setConnectionTime(null);
+    }
+  }, [serverOnline]);
 
   if (loading) {
     return (
@@ -18,9 +27,16 @@ const ServerStatusIndicator = () => {
       <div
         className={`status-dot ${serverOnline ? "online" : "offline"}`}
       ></div>
-      <span className="status-text">
-        {serverOnline ? "Server online" : "Server offline"}
-      </span>
+      <div className="status-content">
+        <span className="status-text">
+          {serverOnline ? "Server online" : "Server offline"}
+        </span>
+        <span className="connection-time">
+          {serverOnline && connectionTime
+            ? `Connected at ${connectionTime.toLocaleTimeString()}`
+            : "-------------"}
+        </span>
+      </div>
     </div>
   );
 };
