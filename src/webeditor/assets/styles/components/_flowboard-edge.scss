@@ -14,5 +14,6 @@
   &.react-flow__edge-path {
     stroke: $color-info;
     stroke-dasharray: 5 5;
+    stroke-width: 2;
   }
 }

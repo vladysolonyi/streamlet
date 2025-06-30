@@ -12,8 +12,10 @@ const DebugConsole = () => {
 
   return (
     <div className="debug-console">
-      <div className="console-header">
-        <h3>Debug Console</h3>
+      <div className="panel__header">
+        <div className="panel__title">
+          <h3>Debug Console</h3>
+        </div>
         <div className="console-controls">
           <button
             className="clear-button"

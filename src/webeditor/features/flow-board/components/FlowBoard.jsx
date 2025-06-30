@@ -17,7 +17,7 @@ import {
   getEmptyConfig,
 } from "../utils/configUtils";
 import "@xyflow/react/dist/base.css";
-import { ReferenceEdge, DefaultEdge } from "./Edge";
+import { RefEdge, DefEdge } from "./Edge";
 import { useReferenceMonitor } from "../hooks/useReferenceMonitor";
 
 const AUTOSAVE_KEY = "pipeline_autosave";
@@ -41,10 +41,10 @@ const FlowBoard = ({ onConfigChange }) => {
   const nodeCount = useRef(new Map());
   const autosaveRef = useRef(null);
 
-  const edgeTypes = useRef({
-    default: DefaultEdge,
-    straight: ReferenceEdge,
-  }).current;
+  const edgeTypes = {
+    default: DefEdge,
+    straight: RefEdge,
+  };
 
   useReferenceMonitor(nodes, setEdges);
 

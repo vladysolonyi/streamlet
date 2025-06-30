@@ -3,21 +3,36 @@
 .name-bar {
   grid-area: name;
   background-color: $bg-semidark;
-  color: $color-light;
-
   text-align: center;
   font-size: $font-size-md;
-  padding: $gap-md;
+  padding: 0;
   user-select: none;
 
-  div {
+  .panel__body {
     display: flex;
+    align-items: center;
+    justify-content: space-between; // 3) text on the left, icon on the right
     flex-direction: row;
-    justify-content: space-between;
+    padding: 0;
+    color: $color-light;
+  }
+
+  .panel__body > * {
+    vertical-align: baseline;
+    height: 100%;
+    color: $color-light;
+    padding: $gap-md;
+  }
+
+  div {
+    color: $color-light;
   }
 
   a {
-    color: inherit;
+    display: block;
+    width: 100%;
+    height: 100%;
     text-decoration: none;
+    color: $color-light;
   }
 }
