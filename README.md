@@ -1,3 +1,3 @@
 # streamlet
 Modular Data Processing Framework
-![alt text](https://imgur.com/a/mUOGxeQ)
+![alt text](https://i.imgur.com/T0CXU4P.png)
