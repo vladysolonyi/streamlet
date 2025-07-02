@@ -8,8 +8,10 @@ Modular Data Processing Framework
 2. ```cd streamlet-master/src```
 
 **Start Server**
+
 3. ```uvicorn api.main:app --reload --log-level debug```
 
 **Start Web App**
+
 4. ```cd streamlet-master/src/webeditor```
 5. ```npm run dev```
