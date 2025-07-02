@@ -4,14 +4,13 @@ Modular Data Processing Framework
 
 ## Temporary Tutorial:
 
-```git clone https://github.com/vladysolonyi/streamlet.git```
-```cd streamlet-master/src```
+1. ```git clone https://github.com/vladysolonyi/streamlet.git```
+2. ```cd streamlet-master/src```
 
 **Start Server**
-
-```uvicorn api.main:app --reload --log-level debug```
+3. ```uvicorn api.main:app --reload --log-level debug```
 
 **Start Web App**
+4. ```cd streamlet-master/src/webeditor```
 
-```cd streamlet-master/src/webeditor```
-```npm run dev```
+5. ```npm run dev```
