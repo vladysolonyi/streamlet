@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { useDnD } from "../../contexts/DnDContext";
 
-const CATEGORY_LABELS = {
-  sources: "sources",
-  exporters: "exporters",
-  modifiers: "modifiers",
-};
+// Define both order and labels in one structure
+const CATEGORIES = [
+  { id: "sources", label: "Sources" },
+  { id: "modifiers", label: "Modifiers" },
+  { id: "exporters", label: "Exporters" },
+];
 
 const NodeCatalog = () => {
   const { setType, nodeTypes } = useDnD();
@@ -18,6 +19,20 @@ const NodeCatalog = () => {
     acc[cat].push({ type, label: formatName(type) });
     return acc;
   }, {});
+
+  // Create lookup map for labels
+  const categoryLabels = CATEGORIES.reduce((map, cat) => {
+    map[cat.id] = cat.label;
+    return map;
+  }, {});
+
+  // Create ordered categories list
+  const orderedCategories = [
+    ...CATEGORIES.map((cat) => cat.id),
+    ...Object.keys(grouped).filter(
+      (id) => !CATEGORIES.some((c) => c.id === id)
+    ),
+  ];
 
   const toggleFolder = (cat) => {
     setOpenFolders((o) => ({ ...o, [cat]: !o[cat] }));
@@ -44,32 +59,35 @@ const NodeCatalog = () => {
 
   return (
     <div className="catalog">
-      {Object.entries(grouped).map(([cat, items]) => (
-        <div key={cat} className="catalog__folder">
-          <button
-            type="button"
-            className="catalog__folder-toggle"
-            onClick={() => toggleFolder(cat)}
-          >
-            {openFolders[cat] ? "-" : "+"}{" "}
-            {CATEGORY_LABELS[cat] || formatName(cat)}
-          </button>
-          {openFolders[cat] && (
-            <ul className="catalog__list">
-              {items.map(({ type, label }) => (
-                <li
-                  key={type}
-                  className="catalog__item"
-                  draggable
-                  onDragStart={(e) => onDragStart(e, type)}
-                >
-                  {label}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ))}
+      {orderedCategories.map(
+        (cat) =>
+          grouped[cat] && (
+            <div key={cat} className="catalog__folder">
+              <button
+                type="button"
+                className="catalog__folder-toggle"
+                onClick={() => toggleFolder(cat)}
+              >
+                {openFolders[cat] ? "-" : "+"}{" "}
+                {categoryLabels[cat] || formatName(cat)}
+              </button>
+              {openFolders[cat] && (
+                <ul className="catalog__list">
+                  {grouped[cat].map(({ type, label }) => (
+                    <li
+                      key={type}
+                      className="catalog__item"
+                      draggable
+                      onDragStart={(e) => onDragStart(e, type)}
+                    >
+                      {label}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )
+      )}
     </div>
   );
 };

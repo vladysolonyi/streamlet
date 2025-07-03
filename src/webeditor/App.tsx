@@ -18,7 +18,7 @@ import { Icon, Icons } from "./assets/icons";
 
 import "./assets/styles/main.scss";
 
-const GITHUB_URL = "https://github.com/vladysolonyi/RF-Vision"; // replace with your repo
+const GITHUB_URL = "https://github.com/vladysolonyi/streamlet"; // replace with your repo
 
 const App = () => {
   const [pipelineConfig, setPipelineConfig] = useState(null);

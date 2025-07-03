@@ -1,4 +1,4 @@
-name: rf-vision
+name: streamlet
 channels:
   - conda-forge
   - defaults
