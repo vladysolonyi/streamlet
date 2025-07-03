@@ -82,3 +82,15 @@ button {
     }
   }
 }
+
+input {
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: $font-size-md;
+  text-align: left;
+  background-color: $bg-dark;
+  color: $color-light;
+  box-shadow: none;
+  border: 1px solid $border;
+  outline: none;
+}

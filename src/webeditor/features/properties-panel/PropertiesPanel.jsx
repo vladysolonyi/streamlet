@@ -202,7 +202,7 @@ const PropertiesPanel = () => {
 
         {referencingEdges.length > 0 && (
           <div className="references-group">
-            <h5>Referencing:</h5>
+            <h5>Referenced by:</h5>
             {referencingEdges.map((edge) => (
               <div key={edge.id} className="reference-item">
                 <span className="reference-node">{edge.target}</span>
@@ -216,7 +216,7 @@ const PropertiesPanel = () => {
 
         {referencedEdges.length > 0 && (
           <div className="references-group">
-            <h5>Referenced by:</h5>
+            <h5>Connected to:</h5>
             {referencedEdges.map((edge) => (
               <div key={edge.id} className="reference-item">
                 <span className="reference-node">{edge.source}</span>

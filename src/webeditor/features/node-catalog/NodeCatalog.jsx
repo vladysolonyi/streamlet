@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { useDnD } from "../../contexts/DnDContext";
 
 const CATEGORY_LABELS = {
+  sources: "sources",
   exporters: "exporters",
-  loaders: "loaders",
-  processors: "processors",
+  modifiers: "modifiers",
 };
 
 const NodeCatalog = () => {
@@ -51,8 +51,7 @@ const NodeCatalog = () => {
             className="catalog__folder-toggle"
             onClick={() => toggleFolder(cat)}
           >
-            {openFolders[cat] ? "-" : "+"}
-            {""}
+            {openFolders[cat] ? "-" : "+"}{" "}
             {CATEGORY_LABELS[cat] || formatName(cat)}
           </button>
           {openFolders[cat] && (

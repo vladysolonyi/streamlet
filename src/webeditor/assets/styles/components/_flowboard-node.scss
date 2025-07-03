@@ -11,7 +11,7 @@
     text-align: center;
     transition: box-shadow 0.2s;
     &.selected {
-      box-shadow: 0 0 0 4px rgba(255, 0, 115, 0.3);
+      box-shadow: 0 0 0 1px $color-light;
     }
     &:hover {
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
