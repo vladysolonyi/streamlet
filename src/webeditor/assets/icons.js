@@ -9,6 +9,7 @@ import sync from "@iconify-icons/codicon/sync";
 import settings from "@iconify-icons/codicon/settings-gear";
 import file from "@iconify-icons/codicon/new-file";
 import save from "@iconify-icons/codicon/save";
+import edit from "@iconify-icons/codicon/edit";
 import exp from "@iconify-icons/codicon/export";
 import pass from "@iconify-icons/codicon/pass";
 import del from "@iconify-icons/codicon/trash";
@@ -29,6 +30,7 @@ export const Icons = {
   settings,
   file,
   save,
+  edit,
   pass,
   exp,
   del,

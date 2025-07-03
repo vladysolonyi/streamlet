@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNodes, useReactFlow, useEdges } from "@xyflow/react";
+import { Icon, Icons } from "../../assets/icons";
 
 const PropertiesPanel = () => {
   const { setNodes } = useReactFlow();
@@ -171,7 +172,9 @@ const PropertiesPanel = () => {
             }}
           >
             <h3>{data.label}</h3>
-            <span className="edit-icon">✏️</span>
+            <span className="edit-icon">
+              <Icon icon={Icons.edit} width="20" height="20" />
+            </span>
           </div>
         )}
         <div className="node-type">{selectedNode.type}</div>
