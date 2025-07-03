@@ -160,7 +160,7 @@ const ConfigPanel = ({ onConfigChange, onConfigNameChange }) => {
                 </button>
                 <button
                   onClick={() => {
-                    const newName = window.prompt("Resave config as:", name);
+                    const newName = window.prompt("Overwrite config as:", name);
                     if (newName) {
                       const cfg = composeConfig(getNodes(), getEdges());
                       const next = { ...importedConfigs, [newName]: cfg };
@@ -169,7 +169,7 @@ const ConfigPanel = ({ onConfigChange, onConfigNameChange }) => {
                     }
                   }}
                   className="config-panel__small-btn"
-                  title="Resave"
+                  title="Overwrite"
                 >
                   <Icon icon={Icons.save} />
                 </button>
