@@ -1,7 +1,5 @@
-// src/assets/icons.js
 import { Icon } from "@iconify/react";
 
-// Codicon imports
 import init from "@iconify-icons/codicon/cloud-upload";
 import start from "@iconify-icons/codicon/play";
 import stop from "@iconify-icons/codicon/debug-stop";
@@ -21,7 +19,6 @@ import info from "@iconify-icons/codicon/info";
 
 import github from "@iconify-icons/codicon/github";
 
-// Export the Icon component and the icons
 export { Icon };
 export const Icons = {
   init,

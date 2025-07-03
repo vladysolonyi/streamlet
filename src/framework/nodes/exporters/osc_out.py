@@ -45,7 +45,6 @@ class OSCOutNode(BaseNode):
         if not self.input_buffers[self.inputs[0]]:
             return
             
-        # Process all packets in buffer
         while self.input_buffers[self.inputs[0]]:
             packet = self.input_buffers[self.inputs[0]].pop(0)
             self._send_packet(packet)
@@ -55,7 +54,6 @@ class OSCOutNode(BaseNode):
         try:
             content = packet.content
             
-            # Determine OSC address
             address = content.get("address", self.params.default_address)
             
             # Handle different content types

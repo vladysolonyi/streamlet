@@ -1,9 +1,9 @@
 @import "../abstracts/variables";
 
 .panel.github {
-  display: flex; // 1) make it a flex‐box
-  align-items: center; // 2) vertically center everything
-  justify-content: space-between; // 3) text on the left, icon on the right
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   flex-direction: row;
   padding: $gap-md;
   background: $bg-semidark;
@@ -11,17 +11,15 @@
   cursor: pointer;
   transition: background-color 0.2s;
 
-  // hover color on entire panel
   &:hover {
     background-color: lighten($bg-semidark, 5%);
     color: $color-primary;
   }
 
-  // full‐panel link: stretch the <a> to cover everything
   .link {
-    flex: 1; // take up all available space
+    flex: 1;
     a {
-      display: block; // make the <a> fill its parent
+      display: block;
       width: 100%;
       height: 100%;
       color: $color-light;
@@ -36,11 +34,11 @@
   }
 
   .icon {
-    margin-left: $gap-sm; // push it off the link
-    pointer-events: none; // clicks still go “through” to the link
+    margin-left: $gap-sm;
+    pointer-events: none;
     color: $color-light;
     font-size: $font-size-lg;
-    display: flex; // so we can align the SVG
+    display: flex;
     align-items: center;
 
     svg {

@@ -11,7 +11,7 @@
   .panel__body {
     display: flex;
     align-items: center;
-    justify-content: space-between; // 3) text on the left, icon on the right
+    justify-content: space-between;
     flex-direction: row;
     padding: 0;
     color: $color-light;
@@ -19,9 +19,9 @@
 
   .panel__body > * {
     vertical-align: baseline;
-    height: 100%;
     color: $color-light;
     padding: $gap-md;
+    align-items: center;
   }
 
   div {

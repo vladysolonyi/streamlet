@@ -22,8 +22,8 @@ class ConsoleLogger(BaseNode):
         
         if self.input_buffers[input_channel]:
             while self.input_buffers[input_channel]:
-                packet = self.input_buffers[input_channel][0]  # Peek first                
+                packet = self.input_buffers[input_channel][0]            
                 print(f"{self.params.prefix} {packet}")
                 self.input_buffers[input_channel].pop(0)
-# Register the node
+
 NODE_CLASSES = [ConsoleLogger]
