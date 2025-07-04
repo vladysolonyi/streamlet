@@ -37,6 +37,7 @@ body {
   padding: $gap-sm;
   background-color: $bg-black;
   color: $color-secondary;
+  font-family: $font-base;
 
   background-image: radial-gradient(
     circle at center,
@@ -59,6 +60,7 @@ button {
   border: none;
   color: $color-light;
   font-size: $font-size-sm;
+  font-family: $font-base;
   padding: $gap-sm $gap-md;
   border-radius: 4px;
   cursor: pointer;

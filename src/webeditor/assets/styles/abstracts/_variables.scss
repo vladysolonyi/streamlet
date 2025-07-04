@@ -39,31 +39,29 @@ $border-radius-xl: 24px;
 $border-radius-xxl: 32px;
 
 @font-face {
-  src: url("../../fonts/Favorit-Pro/FavoritPro-Regular.ttf");
+  src: url("../fonts/Favorit-Pro/FavoritPro-Regular.otf");
   font-family: "Favorit Pro";
   font-weight: normal;
   font-style: normal;
 }
 
 @font-face {
-  src: url("../../fonts/Favorit-Pro/FavoritPro-Bold.ttf");
+  src: url("../fonts/Favorit-Pro/FavoritPro-Bold.otf");
   font-family: "Favorit Pro";
   font-weight: bold;
   font-style: normal;
 }
 
 @font-face {
-  src: url("../../fonts/Favorit-Mono/FavoritMono-Regular.ttf");
+  src: url("../fonts/Favorit-Mono/FavoritMono-Regular.otf");
   font-family: "Favorit Mono";
   font-weight: normal;
-  font-style: italic;
 }
 
 @font-face {
-  src: url("../../fonts/Favorit-Mono/FavoritMono-Bold.ttf");
+  src: url("../fonts/Favorit-Mono/FavoritMono-Bold.otf");
   font-family: "Favorit Mono";
   font-weight: bold;
-  font-style: italic;
 }
 
 $font-base: "Favorit Pro", sans-serif;

@@ -1,8 +1,13 @@
 @import "../abstracts/variables";
 
+.panel__body {
+  overflow: hidden;
+}
+
 .server-status {
   display: flex;
   align-items: center;
+  overflow: hidden;
   gap: $gap-md;
   font-size: $font-size-sm;
   padding: $gap-sm $gap-md;
