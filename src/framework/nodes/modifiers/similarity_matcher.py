@@ -20,7 +20,7 @@ def _euclidean_distance(a: np.ndarray, b: np.ndarray) -> float:
 class SimilarityMatcher(BaseNode):
     node_type = "similarity_matcher"
     accepted_data_types = {DataType.STREAM, DataType.EVENT}
-    accepted_formats = {DataFormat.JSON}
+    accepted_formats = {DataFormat.NUMERICAL, DataFormat.TEXTUAL, DataFormat.BINARY}
     accepted_categories = {DataCategory.GENERIC}
     IS_GENERATOR = False
     IS_ASYNC_CAPABLE = False

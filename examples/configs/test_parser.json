@@ -1,0 +1,112 @@
+{
+  "settings": {
+    "fps_limit": 5
+  },
+  "nodes": [
+    {
+      "id": "timer_countries",
+      "type": "timer",
+      "name": "timer_countries",
+      "position": {
+        "x": -63.50364128325324,
+        "y": -73.92961224020526
+      },
+      "params": {
+        "interval": "20",
+        "use_textual": false
+      },
+      "inputs": []
+    },
+    {
+      "id": "api_countries",
+      "type": "api_request",
+      "name": "api_countries",
+      "position": {
+        "x": 196.5168223212827,
+        "y": 27.452413777254378
+      },
+      "params": {
+        "method": "GET",
+        "headers": {},
+        "params": {},
+        "data": {},
+        "timeout": 5,
+        "response_format": "json",
+        "url": "https://restcountries.com/v3.1/all?fields=name,population"
+      },
+      "inputs": [
+        "timer_countries"
+      ]
+    },
+    {
+      "id": "console_logger_countries",
+      "type": "console_logger",
+      "name": "console_logger_countries",
+      "position": {
+        "x": 481.0078378185244,
+        "y": 417.44660421077
+      },
+      "params": {
+        "prefix": "[COUNTRIES]"
+      },
+      "inputs": [
+        "delay_2"
+      ]
+    },
+    {
+      "id": "udp_out_2",
+      "type": "udp_out",
+      "name": "udp_out_2",
+      "position": {
+        "x": 330.7529326065712,
+        "y": 455.6547069696403
+      },
+      "params": {
+        "ip": "127.0.0.1",
+        "port": 7000,
+        "buffer_size": 1024
+      },
+      "inputs": [
+        "delay_2"
+      ]
+    },
+    {
+      "id": "delay_2",
+      "type": "delay",
+      "name": "delay_2",
+      "position": {
+        "x": 408.75505827062904,
+        "y": 225.0031314970058
+      },
+      "params": {
+        "delay_ms": 1000,
+        "max_queue_size": 1000,
+        "drop_on_overflow": false
+      },
+      "inputs": [
+        "ai_parser_1"
+      ]
+    },
+    {
+      "id": "ai_parser_1",
+      "type": "ai_parser",
+      "name": "ai_parser_1",
+      "position": {
+        "x": 261.17598842390265,
+        "y": 126.25999390495471
+      },
+      "params": {
+        "model": "deepseek-r1-distill-llama-70b",
+        "max_tokens": 1024,
+        "temperature": 0.3,
+        "parse_task": "Parse the total population",
+        "timeout": 10,
+        "minimize_json": true,
+        "api_key": ""
+      },
+      "inputs": [
+        "api_countries"
+      ]
+    }
+  ]
+}

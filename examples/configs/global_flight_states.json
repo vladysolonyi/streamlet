@@ -1,0 +1,78 @@
+{
+  "settings": {
+    "fps_limit": 5
+  },
+  "nodes": [
+    {
+      "id": "timer_flights",
+      "type": "timer",
+      "name": "timer_flights",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "params": {
+        "interval": "20",
+        "use_textual": false
+      },
+      "inputs": []
+    },
+    {
+      "id": "api_flights",
+      "type": "api_request",
+      "name": "api_flights",
+      "position": {
+        "x": 143.58729437462932,
+        "y": 114.86983549970341
+      },
+      "params": {
+        "method": "GET",
+        "headers": {},
+        "params": {},
+        "data": {},
+        "timeout": 4,
+        "response_format": "json_text",
+        "url": "https://opensky-network.org/api/states/all"
+      },
+      "inputs": [
+        "timer_flights"
+      ]
+    },
+    {
+      "id": "console_logger_flights",
+      "type": "console_logger",
+      "name": "console_logger_flights",
+      "position": {
+        "x": 542.1856235586002,
+        "y": 483.6020074537516
+      },
+      "params": {
+        "prefix": "[FLIGHTS]"
+      },
+      "inputs": [
+        "ai_parser_2"
+      ]
+    },
+    {
+      "id": "ai_parser_2",
+      "type": "ai_parser",
+      "name": "ai_parser_2",
+      "position": {
+        "x": 313.4800205617719,
+        "y": 265.70316603684654
+      },
+      "params": {
+        "model": "deepseek-r1-distill-llama-70b",
+        "max_tokens": "6000",
+        "temperature": 0.3,
+        "parse_task": "Parse all swiss flights",
+        "timeout": 10,
+        "minimize_json": true,
+        "api_key": ""
+      },
+      "inputs": [
+        "api_flights"
+      ]
+    }
+  ]
+}

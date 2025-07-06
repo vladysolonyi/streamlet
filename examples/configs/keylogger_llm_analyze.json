@@ -6,7 +6,7 @@
       "params": { "listen_port": 7000 }
     },
     {
-      "type": "data_accumulator",
+      "type": "accumulator",
       "name": "AccumulateKeylogger",
       "inputs": ["KeyloggerExt"],
       "params": {
@@ -19,7 +19,7 @@
       "type": "ai_agent",
       "name": "BehaviorAnalyst",
       "params": {
-        "api_key": "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",
+        "api_key": "",
         "model": "deepseek-r1-distill-llama-70b",
         "analysis_task": "Identify typing patterns and behavioral biometrics from keystroke data"
       },

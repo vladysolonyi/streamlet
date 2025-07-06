@@ -1,15 +1,17 @@
-// src/features/config-panel/ConfigPanel.jsx
 import React, { useState, useRef, useCallback } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { parseConfig, composeConfig } from "../flow-board/utils/configUtils";
 import { Icon, Icons } from "../../assets/icons";
+import { useDnD } from "../../contexts/DnDContext";
 
 const AUTOSAVE_KEY = "pipeline_autosave";
 const IMPORTED_KEY = "importedConfigs";
 
 const ConfigPanel = ({ onConfigChange, onConfigNameChange }) => {
   const { setNodes, setEdges, getNodes, getEdges } = useReactFlow();
+  const { nodeTypes } = useDnD();
   const fileInputRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [importedConfigs, setImportedConfigs] = useState(() => {
     try {
@@ -24,17 +26,21 @@ const ConfigPanel = ({ onConfigChange, onConfigNameChange }) => {
     localStorage.setItem(IMPORTED_KEY, JSON.stringify(next));
   }, []);
 
-  // Central apply routine: sets board, persists, notifies parent
   const applyConfig = useCallback(
     (cfgObj, name) => {
-      const { initialNodes, initialEdges } = parseConfig(cfgObj, {});
+      if (!nodeTypes || Object.keys(nodeTypes).length === 0) {
+        console.error("Node types not loaded yet");
+        return;
+      }
+      
+      const { initialNodes, initialEdges } = parseConfig(cfgObj, nodeTypes);
       setNodes(initialNodes);
       setEdges(initialEdges);
       localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(cfgObj));
       onConfigChange(cfgObj);
       onConfigNameChange(name);
     },
-    [onConfigChange, onConfigNameChange, setNodes, setEdges]
+    [nodeTypes, onConfigChange, onConfigNameChange, setNodes, setEdges]
   );
 
   // --- Button handlers ---
@@ -72,12 +78,15 @@ const ConfigPanel = ({ onConfigChange, onConfigNameChange }) => {
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    setIsLoading(true);
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
         const parsed = JSON.parse(ev.target.result);
         const defaultName = file.name.replace(/\.json$/, "");
         const name = window.prompt("Name this imported config:", defaultName);
+        
         if (name) {
           const next = { ...importedConfigs, [name]: parsed };
           updateImported(next);
@@ -85,11 +94,14 @@ const ConfigPanel = ({ onConfigChange, onConfigNameChange }) => {
         }
       } catch (err) {
         alert(`Import error: ${err.message}`);
+      } finally {
+        setIsLoading(false);
       }
     };
     reader.readAsText(file);
     e.target.value = "";
   };
+ 
 
   const handleSave = () => {
     const name = window.prompt("Save current config as:", "");

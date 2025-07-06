@@ -1,12 +1,10 @@
-import os
-import json
-import csv
-from typing import List, Dict, Any, Optional
-from datetime import datetime
+import logging
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 from framework.nodes.base_node import BaseNode
 from framework.data.data_packet import DataPacket
-from framework.data.data_types import *
+from framework.data.data_types import DataType, DataFormat, DataCategory
+from framework.core.decorators import node_telemetry
 
 class StorageNode(BaseNode):
     node_type = "storage"
@@ -14,65 +12,47 @@ class StorageNode(BaseNode):
     accepted_formats = {DataFormat.NUMERICAL, DataFormat.TEXTUAL, DataFormat.BINARY}
     accepted_categories = set(DataCategory)
     IS_GENERATOR = False
+    MIN_INPUTS = 1
+    MAX_INPUTS = 1
 
     class Params(BaseModel):
-        storage_path: str = "./data_storage"
-        file_prefix: str = "data"
-        flush_on_each: bool = True
-        file_format: str = "jsonl"  # "jsonl" or "csv"
-        filter_by_type: Optional[str] = None
-        include_metadata: bool = True
+        filter_by_type: Optional[str] = None    # only store packets of this DataType
+        include_metadata: bool = True           # add packet.metadata to stored record
 
     def __init__(self, config):
         super().__init__(config)
         self.params = self.Params(**config.get("params", {}))
-        os.makedirs(self.params.storage_path, exist_ok=True)
-        self.buffer: List[DataPacket] = []
+        self._storage: List[Dict[str, Any]] = []
+        self.last_entry: Optional[Dict[str, Any]] = None
+        self.logger = logging.getLogger(self.node_type)
 
+    @node_telemetry("on_data")
     def on_data(self, packet: DataPacket, input_channel: str):
-        # Optional filtering
+        # 1. Filter by data_type if requested
         if self.params.filter_by_type and packet.data_type.name.lower() != self.params.filter_by_type.lower():
             return
 
-        self.buffer.append(packet)
-        if self.params.flush_on_each:
-            self.flush()
+        # 2. Build a simple record
+        record: Dict[str, Any] = {
+            "content": packet.content,
+            "timestamp": packet.timestamp.isoformat(),
+            "source": packet.source,
+        }
+        if self.params.include_metadata and packet.metadata:
+            record["metadata"] = packet.metadata
 
-    def flush(self):
-        if not self.buffer:
-            return
+        # 3. Store and update last_entry
+        self._storage.append(record)
+        self.last_entry = record
 
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        filename = f"{self.params.file_prefix}_{timestamp}.{self.params.file_format}"
-        filepath = os.path.join(self.params.storage_path, filename)
+        self.logger.debug(f"Stored record #{len(self._storage)}: {record}")
 
-        if self.params.file_format == "jsonl":
-            with open(filepath, "w", encoding="utf-8") as f:
-                for pkt in self.buffer:
-                    entry = {
-                        "content": pkt.content,
-                        "timestamp": pkt.timestamp.isoformat(),
-                        "source": pkt.source,
-                    }
-                    if self.params.include_metadata and pkt.metadata:
-                        entry["metadata"] = pkt.metadata
-                    f.write(json.dumps(entry) + "\n")
+        # 4. Immediately pass the original packet through
+        for out_ch in self.outputs:
+            self.data_bus.publish(out_ch, packet)
 
-        elif self.params.file_format == "csv":
-            # Assumes packets contain dicts or structured content
-            headers = set()
-            for pkt in self.buffer:
-                if isinstance(pkt.content, dict):
-                    headers.update(pkt.content.keys())
-            headers = list(headers)
-
-            with open(filepath, "w", newline="", encoding="utf-8") as f:
-                writer = csv.DictWriter(f, fieldnames=headers)
-                writer.writeheader()
-                for pkt in self.buffer:
-                    if isinstance(pkt.content, dict):
-                        writer.writerow(pkt.content)
-
-        self.buffer.clear()
+    def get_all(self) -> List[Dict[str, Any]]:
+        """Optionally expose the full session storage in code."""
+        return list(self._storage)
 
 NODE_CLASSES = [StorageNode]

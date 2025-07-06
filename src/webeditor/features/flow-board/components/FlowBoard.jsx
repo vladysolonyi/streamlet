@@ -51,41 +51,63 @@ const FlowBoard = ({ onConfigChange }) => {
   // Drop‑zone state
   const [isDragOverFlow, setIsDragOverFlow] = useState(false);
 
-  // Load initial or autosaved config
+  // Load initial or autosaved config ONLY after nodeTypes are available
   useEffect(() => {
+    if (!nodeTypes || Object.keys(nodeTypes).length === 0) return;
+    if (initialized) return;
+    
     let cfg = getEmptyConfig();
     const saved = localStorage.getItem(AUTOSAVE_KEY);
+    
     if (saved) {
       try {
         cfg = JSON.parse(saved);
-      } catch {}
+      } catch (e) {
+        console.error("Failed to parse autosave", e);
+      }
     }
-    const { initialNodes, initialEdges } = parseConfig(cfg, nodeTypes);
-    setNodes(initialNodes);
-    setEdges(initialEdges);
-    initialNodes.forEach((n) => {
-      const m = n.id.match(/_(\d+)$/);
-      const count = m ? +m[1] : 0;
-      if (count > (nodeCount.current.get(n.type) || 0))
-        nodeCount.current.set(n.type, count);
-    });
-    setInitialized(true);
-  }, [nodeTypes, setNodes, setEdges]);
+    
+    try {
+      const { initialNodes, initialEdges } = parseConfig(cfg, nodeTypes);
+      setNodes(initialNodes);
+      setEdges(initialEdges);
+      
+      // Initialize node count
+      initialNodes.forEach((n) => {
+        const m = n.id.match(/_(\d+)$/);
+        const count = m ? +m[1] : 0;
+        if (count > (nodeCount.current.get(n.type) || 0))
+          nodeCount.current.set(n.type, count);
+      });
+      
+      setInitialized(true);
+    } catch (e) {
+      console.error("Failed to initialize config", e);
+      setInitialized(true); // Still mark as initialized to prevent blocking
+    }
+  }, [nodeTypes, setNodes, setEdges, initialized]);
 
-  // Autosave
+  // Autosave - only after initialization
   useEffect(() => {
     if (!initialized) return;
+    
     autosaveRef.current = setInterval(() => {
       const cfg = composeConfig(nodes, edges);
       localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(cfg));
     }, 1000);
-    return () => clearInterval(autosaveRef.current);
+    
+    return () => {
+      if (autosaveRef.current) {
+        clearInterval(autosaveRef.current);
+      }
+    };
   }, [initialized, nodes, edges]);
 
-  // Notify parent
+  // Notify parent - only after initialization
   useEffect(() => {
+    if (!initialized) return;
     onConfigChange?.(composeConfig(nodes, edges));
-  }, [nodes, edges, onConfigChange]);
+  }, [nodes, edges, onConfigChange, initialized]);
 
   // Reset pipeline change flag
   useEffect(() => {
@@ -135,10 +157,19 @@ const FlowBoard = ({ onConfigChange }) => {
       if (!cfg) return;
 
       // Parse and replace
-      const { initialNodes, initialEdges } = parseConfig(cfg, nodeTypes);
-      rfSetNodes(initialNodes);
-      rfSetEdges(initialEdges);
-      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(cfg));
+      if (!nodeTypes || Object.keys(nodeTypes).length === 0) {
+        console.error("Cannot load config - nodeTypes not available");
+        return;
+      }
+      
+      try {
+        const { initialNodes, initialEdges } = parseConfig(cfg, nodeTypes);
+        rfSetNodes(initialNodes);
+        rfSetEdges(initialEdges);
+        localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(cfg));
+      } catch (e) {
+        console.error("Failed to load dropped config", e);
+      }
     },
     [nodeTypes, rfSetNodes, rfSetEdges]
   );
@@ -153,19 +184,28 @@ const FlowBoard = ({ onConfigChange }) => {
         y: e.clientY,
       });
       const name = getDefaultName(type);
+      
+      // Get schema safely
       const schema = nodeTypes[type]?.params_schema;
-      const defaults = Object.fromEntries(
-        Object.entries(schema?.properties || {}).map(([k, def]) => [
-          k,
-          def.default,
-        ])
+      const schemaProperties = schema?.properties || {};
+      
+      // Create default parameters from schema
+      const defaultParams = Object.fromEntries(
+        Object.entries(schemaProperties)
+          .filter(([_, def]) => def.default !== undefined)
+          .map(([key, def]) => [key, def.default])
       );
+      
       rfSetNodes((ns) =>
         ns.concat({
           id: name,
           type,
           position: pos,
-          data: { label: name, params: defaults, paramsSchema: schema },
+          data: { 
+            label: name, 
+            params: defaultParams, 
+            paramsSchema: schema 
+          },
         })
       );
     },
@@ -182,6 +222,12 @@ const FlowBoard = ({ onConfigChange }) => {
       onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
+      {!initialized ? (
+        <div className="flow-loading-overlay">
+          <div className="flow-loading-message">Loading pipeline configuration...</div>
+        </div>
+      ) : null}
+      
       <ReactFlow
         nodes={nodes}
         edges={edges}

@@ -44,25 +44,33 @@ export const parseConfig = (config, nodeTypes = {}) => {
     names.add(node.name);
   });
 
-  const initialNodes = config.nodes.map((node, index) => {
+  const initialNodes = config.nodes.map((node) => {
+    // Get schema only if nodeTypes are available
     const nodeSchema = nodeTypes[node.type]?.params_schema || {};
+    const schemaProperties = nodeSchema.properties || {};
+    
+    // Create default parameters from schema
+    const defaultParams = Object.fromEntries(
+      Object.entries(schemaProperties)
+        .filter(([_, def]) => def.default !== undefined)
+        .map(([key, def]) => [key, def.default])
+    );
+    
+    // Merge saved parameters with defaults
+    const finalParams = {
+      ...defaultParams,
+      ...(node.params || {})
+    };
+
     return {
       id: node.name,
       type: node.type,
-      position: node.position || { x: index * 250, y: 0 },
+      position: node.position || { x: 0, y: 0 },
       data: {
         label: node.name,
-        params: {
-          ...Object.fromEntries(
-            Object.entries(nodeSchema.properties || {}).map(([key, def]) => [
-              key,
-              def?.default,
-            ])
-          ),
-          ...(node.params || {}),
-        },
+        params: finalParams,
         paramsSchema: nodeSchema,
-        references: extractReferences(node.params || {}),
+        references: extractReferences(finalParams),
       },
     };
   });

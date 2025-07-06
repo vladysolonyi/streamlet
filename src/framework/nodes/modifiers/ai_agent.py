@@ -19,7 +19,7 @@ class AIAgentNode(BaseNode):
         api_key: str = Field(..., description="Groq API key from environment")
         model: str = Field(default="deepseek-r1-distill-llama-70b", 
                          description="Groq model name")
-        max_tokens: int = Field(default=1024, ge=256, le=4096)
+        max_tokens: int = Field(default=1024, ge=256, le=100000)
         temperature: float = Field(default=0.6, ge=0.0, le=1.0)
         analysis_task: str = Field(default="Analyze and extract insights from this data",
                                   description="Specific analysis objective")
@@ -28,14 +28,7 @@ class AIAgentNode(BaseNode):
         timeout: float = Field(default=10.0, description="API timeout in seconds")
 
 
-    BASE_PROMPT = """Analyze this typing data for patterns:
-    
-    Identify which activity the user is performing.
-    Return only JSON in this format without any additional text:
-    {
-        "activity": 
-        "description": 
-    }"""
+    BASE_PROMPT = """You are a data analyst/processor. Your task is to analyze and extract insights from the data provided below. If the user asks you to output in specific format, be sure to not output anything else from the result."""
     
 
     def __init__(self, config):

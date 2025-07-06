@@ -3,12 +3,13 @@ from pydantic import BaseModel
 from framework.nodes.base_node import BaseNode
 from framework.data.data_packet import DataPacket
 from framework.data.data_types import DataType, DataFormat, DataCategory, LifecycleState
+import logging
 
 
 class Annotator(BaseNode):
     node_type = "annotator"
     accepted_data_types = {DataType.STREAM, DataType.EVENT, DataType.DERIVED}
-    accepted_formats = {DataFormat.NUMERICAL, DataFormat.TEXTUAL, DataFormat.BINARY, DataFormat.JSON}
+    accepted_formats = {DataFormat.NUMERICAL, DataFormat.TEXTUAL, DataFormat.BINARY, DataFormat}
     accepted_categories = {DataCategory.GENERIC}
     IS_GENERATOR = False  # Passive processor
     MIN_INPUTS = 1

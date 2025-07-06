@@ -16,7 +16,7 @@ logging.basicConfig(
 manager = PipelineManager()
 
 # Create initial pipeline
-config = "configs/math_pipeline.json"  # Or use a dict config
+config = "configs/global_flight_states.json"  # Or use a dict config
 pipeline_id = manager.create_pipeline(config)
 print(f"Created pipeline with ID: {pipeline_id}")
 
@@ -59,7 +59,7 @@ config_new = {
 
 # # Let it run for a bit
 # print("Pipeline running with new config...")
-time.sleep(3)
+time.sleep(28)
 
 # Stop and clean up
 print("\nStopping pipeline...")
