@@ -1,4 +1,5 @@
 import time
+
 from framework.nodes import BaseNode
 from pydantic import BaseModel
 from framework.data.data_types import *
@@ -7,6 +8,7 @@ from typing import Union
 
 class NumberGenerator(BaseNode):
     node_type = "number_generator"
+    tags = ["untested"]
     IS_GENERATOR = True
     MIN_INPUTS = 0
     IS_ASYNC_CAPABLE = False

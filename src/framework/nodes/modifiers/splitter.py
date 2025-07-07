@@ -7,6 +7,7 @@ from framework.data.data_types import DataType, DataFormat, DataCategory, Lifecy
 
 class Splitter(BaseNode):
     node_type = "splitter"
+    tags = ["Untested"]
     accepted_data_types = {DataType.STREAM, DataType.EVENT}
     accepted_formats = {DataFormat.NUMERICAL, DataFormat.TEXTUAL, DataFormat.BINARY}
     accepted_categories = {DataCategory.GENERIC}

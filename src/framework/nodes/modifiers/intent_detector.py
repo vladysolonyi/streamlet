@@ -8,6 +8,7 @@ from transformers import pipeline
 
 class IntentDetector(BaseNode):
     node_type = "intent_detector"
+    tags = ["Untested"]
     accepted_data_types = {DataType.STREAM, DataType.EVENT}
     accepted_formats = {DataFormat.TEXTUAL}
     accepted_categories = {DataCategory.GENERIC}

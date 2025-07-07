@@ -8,6 +8,7 @@ from framework.data.data_types import *
 class OSCOutNode(BaseNode):
     """Node for sending DataPackets as OSC messages"""
     node_type = "osc_out"
+    tags = ["network"]
     MIN_INPUTS = 1
     MAX_INPUTS = 1
     IS_GENERATOR = False

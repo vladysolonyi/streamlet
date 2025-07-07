@@ -8,6 +8,7 @@ import logging
 
 class TextClassifier(BaseNode):
     node_type = "text_classifier"
+    tags = ["Untested"]
     accepted_data_types = {DataType.STREAM, DataType.EVENT}
     accepted_formats = {DataFormat.TEXTUAL}
     accepted_categories = {DataCategory.GENERIC}

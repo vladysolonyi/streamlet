@@ -8,6 +8,7 @@ from framework.data import DataType, DataFormat, DataCategory
 
 class ApiRequestNode(BaseNode):
     node_type = "api_request"
+    tags = ["network"]
     accepted_data_types = {DataType.EVENT}    # Only trigger on EVENT packets
     accepted_formats = set(DataFormat)                   # Accept any format
     accepted_categories = set(DataCategory)    # Accept all categories
@@ -23,7 +24,7 @@ class ApiRequestNode(BaseNode):
         params: dict = {}                      # Query parameters
         data: dict = {}                        # Body data for POST/PUT
         timeout: float = 5.0                   # Request timeout in seconds
-        response_format: str = "json"        # "json" or "text"
+        response_format: str = "text"        # "json" or "text"
 
     def __init__(self, config):
         super().__init__(config)

@@ -16,7 +16,11 @@ const NodeCatalog = () => {
   const grouped = Object.entries(nodeTypes).reduce((acc, [type, data]) => {
     const cat = data.category || "uncategorized";
     if (!acc[cat]) acc[cat] = [];
-    acc[cat].push({ type, label: formatName(type) });
+    acc[cat].push({
+      type,
+      label: formatName(type),
+      tags: data.tags || []  // include tags array
+    });
     return acc;
   }, {});
 
@@ -68,19 +72,29 @@ const NodeCatalog = () => {
                 className="catalog__folder-toggle"
                 onClick={() => toggleFolder(cat)}
               >
-                {openFolders[cat] ? "-" : "+"}{" "}
-                {categoryLabels[cat] || formatName(cat)}
+                {openFolders[cat] ? "-" : "+"} {categoryLabels[cat] || formatName(cat)}
               </button>
               {openFolders[cat] && (
                 <ul className="catalog__list">
-                  {grouped[cat].map(({ type, label }) => (
+                  {grouped[cat].map(({ type, label, tags }) => (
                     <li
                       key={type}
                       className="catalog__item"
                       draggable
                       onDragStart={(e) => onDragStart(e, type)}
                     >
-                      {label}
+                      <div className="catalog__item-content">
+                        <span className="catalog__item-label">{label}</span>
+                        {tags.length > 0 && (
+                          <div className="catalog__item-tags">
+                            {tags.map((tag) => (
+                              <span key={tag} className={`tag tag--${tag}`}>
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>

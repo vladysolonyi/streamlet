@@ -33,11 +33,13 @@
 
 html,
 body {
+  color-scheme: dark;
   height: 100%;
   padding: $gap-sm;
   background-color: $bg-black;
   color: $color-secondary;
   font-family: $font-base;
+  font-weight: 100;
 
   background-image: radial-gradient(
     circle at center,

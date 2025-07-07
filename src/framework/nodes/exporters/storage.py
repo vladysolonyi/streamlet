@@ -8,6 +8,7 @@ from framework.core.decorators import node_telemetry
 
 class StorageNode(BaseNode):
     node_type = "storage"
+    tags = ["beta"]
     accepted_data_types = set(DataType)
     accepted_formats = {DataFormat.NUMERICAL, DataFormat.TEXTUAL, DataFormat.BINARY}
     accepted_categories = set(DataCategory)

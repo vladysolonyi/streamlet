@@ -7,6 +7,7 @@ from framework.data.data_types import DataType, DataFormat, DataCategory, Lifecy
 
 class Average(BaseNode):
     node_type = "average"
+    tags = ["WIP"]
     accepted_data_types = {DataType.STREAM, DataType.EVENT}
     accepted_formats = {DataFormat.NUMERICAL}
     accepted_categories = {DataCategory.GENERIC}

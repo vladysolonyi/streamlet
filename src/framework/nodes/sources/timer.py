@@ -6,6 +6,7 @@ from framework.nodes.base_node import BaseNode
 
 class TimerNode(BaseNode):
     node_type = "timer"
+    tags = ["untested"]
     accepted_data_types = set()          # No inputs
     accepted_formats = set()
     accepted_categories = set()

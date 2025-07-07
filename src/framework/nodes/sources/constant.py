@@ -8,6 +8,7 @@ from framework.data.data_packet import DataPacket
 
 class ConstantNode(BaseNode):
     node_type = "constant"
+    tags = ["utils"]
     accepted_data_types = set()
     accepted_formats = set()
     accepted_categories = set()

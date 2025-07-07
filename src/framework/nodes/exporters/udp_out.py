@@ -9,6 +9,7 @@ from framework.core.decorators import node_telemetry
 class UDPOut(BaseNode):
     """Node for sending validated DataPackets via UDP"""
     node_type = "udp_out"
+    tags = ["network"]
     accepted_data_types = set(DataType)
     accepted_formats = set(DataFormat)
     accepted_categories = set(DataCategory)

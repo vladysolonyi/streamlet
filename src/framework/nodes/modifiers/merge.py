@@ -8,6 +8,7 @@ import time
 
 class Merge(BaseNode):
     node_type = "merge"
+    tags = ["Untested"]
     accepted_data_types = {DataType.STREAM, DataType.EVENT, DataType.DERIVED}
     accepted_formats = {DataFormat.NUMERICAL, DataFormat.TEXTUAL, DataFormat.BINARY}
     accepted_categories = {DataCategory.GENERIC}

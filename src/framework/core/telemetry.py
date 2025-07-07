@@ -34,14 +34,14 @@ class Telemetry:
         """Called from sync nodes to queue messages"""
         try:
             self.queue.sync_q.put(message)
-            telemetry_logger.debug(f"📦 Queued telemetry: {message} | Queue size: {self.queue.sync_q.qsize()}")
+            #telemetry_logger.debug(f"📦 Queued telemetry: {message} | Queue size: {self.queue.sync_q.qsize()}")
         except Exception as e:
             telemetry_logger.error(f"❌ Queue error: {str(e)}")
 
     async def _async_broadcaster(self):
         """Process messages from the queue"""
         self.is_running = True
-        telemetry_logger.info("🚀 Starting telemetry broadcaster")
+        #telemetry_logger.info("🚀 Starting telemetry broadcaster")
         
         try:
             while self.is_running:
@@ -51,7 +51,7 @@ class Telemetry:
                         timeout=1.0
                     )
                     
-                    telemetry_logger.debug(f"📡 Processing message: {message}")
+                    #telemetry_logger.debug(f"📡 Processing message: {message}")
                     
                     async with self.async_lock:
                         dead_connections = []
@@ -61,10 +61,10 @@ class Telemetry:
                         for conn in self.active_connections:
                             try:
                                 await conn.send_json(message)
-                                telemetry_logger.debug(f"  ✅ Sent to {conn.client}")
+                                #telemetry_logger.debug(f"  ✅ Sent to {conn.client}")
                             except (WebSocketDisconnect, RuntimeError) as e:
                                 dead_connections.append(conn)
-                                telemetry_logger.debug(f"  ❌ Dead connection: {conn.client} - {str(e)}")
+                                #telemetry_logger.debug(f"  ❌ Dead connection: {conn.client} - {str(e)}")
                             except Exception as e:
                                 telemetry_logger.error(f"  ⚠️ Send error to {conn.client}: {str(e)}")
                                 
@@ -75,7 +75,7 @@ class Telemetry:
                     
                 except asyncio.TimeoutError:
                     # Normal timeout - log periodically
-                    telemetry_logger.debug("⏳ Queue timeout (no messages)")
+                    #telemetry_logger.debug("⏳ Queue timeout (no messages)")
                     continue
                 except Exception as e:
                     telemetry_logger.error(f"Broadcaster error: {str(e)}")

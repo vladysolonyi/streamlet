@@ -1,10 +1,10 @@
 # framework/core/registry.py
-from typing import Type, Dict, Any
+from typing import Type, Dict, Any, List
 
 class NodeRegistry:
-    """Central registry for RF/EM processing nodes"""
     _nodes: Dict[str, Type] = {}
     _categories: Dict[str, str] = {}  # Track node categories
+    _tags: Dict[str, List[str]] = {}
 
     @classmethod
     def register(cls, node_type: str, node_class: Type):
@@ -16,6 +16,7 @@ class NodeRegistry:
         module_parts = node_class.__module__.split('.')
         category = module_parts[-2] if len(module_parts) >= 2 else 'other'
         cls._categories[node_type] = category
+        cls._tags[node_type] = getattr(node_class, 'tags', [])
         
         cls._nodes[node_type] = node_class
 
@@ -40,3 +41,8 @@ class NodeRegistry:
     def get_params_schema(cls, node_type: str) -> dict:
         """Get parameter schema for node type"""
         return cls._nodes[node_type].get_param_schema()
+    
+    @classmethod
+    def get_tags(cls, node_type: str) -> List[str]:
+        """Return developer-defined tags for this node type"""
+        return cls._tags.get(node_type, [])

@@ -9,6 +9,7 @@ from framework.data.data_types import DataType, DataFormat, DataCategory, Lifecy
 
 class RegexExtractor(BaseNode):
     node_type = "regex_extractor"
+    tags = ["Untested"]
     accepted_data_types = {DataType.STREAM, DataType.EVENT}
     accepted_formats = {DataFormat.TEXTUAL}
     accepted_categories = {DataCategory.GENERIC}

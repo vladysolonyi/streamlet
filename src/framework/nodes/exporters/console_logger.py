@@ -6,6 +6,7 @@ from framework.core.decorators import node_telemetry
 
 class ConsoleLogger(BaseNode):
     node_type = "console_logger"
+    tags = ["debug"]
     accepted_data_types = set(DataType)
     accepted_formats = set(DataFormat)
     accepted_categories = set(DataCategory)

@@ -8,6 +8,7 @@ import logging
 
 class Annotator(BaseNode):
     node_type = "annotator"
+    tags = ["Untested"]
     accepted_data_types = {DataType.STREAM, DataType.EVENT, DataType.DERIVED}
     accepted_formats = {DataFormat.NUMERICAL, DataFormat.TEXTUAL, DataFormat.BINARY, DataFormat}
     accepted_categories = {DataCategory.GENERIC}

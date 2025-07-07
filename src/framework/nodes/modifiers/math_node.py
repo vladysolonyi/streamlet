@@ -6,6 +6,7 @@ from framework.data.data_types import *
 
 class MathMultiplyNode(BaseNode):
     node_type = "math_multiply"
+    tags = ["math"]
     accepted_data_types = {DataType.STREAM, DataType.DERIVED, DataType.STATIC}
     accepted_formats = {DataFormat.NUMERICAL}
     accepted_categories = set(DataCategory)

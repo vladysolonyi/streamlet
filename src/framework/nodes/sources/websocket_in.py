@@ -9,6 +9,7 @@ from framework.data.data_types import DataType, DataFormat, DataCategory
 
 class WebSocketIn(BaseNode):
     node_type = "websocket_in"
+    tags = ["network"]
     IS_GENERATOR = True  # Actively receives data
 
     accepted_data_types = {DataType.EVENT}

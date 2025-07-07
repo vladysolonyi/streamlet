@@ -230,7 +230,8 @@ async def get_available_nodes():
     return {
         nt: {
             "params_schema": NodeRegistry.get_params_schema(nt),
-            "category": NodeRegistry.get_category(nt)
+            "category": NodeRegistry.get_category(nt),
+            "tags": NodeRegistry.get_tags(nt)
         }
         for nt in NodeRegistry.list_available()
     }

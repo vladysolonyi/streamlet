@@ -1,5 +1,5 @@
 from abc import ABCMeta
-from typing import Type, Set, Any, Optional
+from typing import Type, Set, Any, Optional, List
 from pydantic import BaseModel
 from framework.data import *
 from framework.core.telemetry import telemetry
@@ -30,6 +30,7 @@ class NodeMeta(ABCMeta):
 # ===============
 class BaseNode(metaclass=NodeMeta):
     node_type: str  # Node Type
+    tags: List[str] = []  # override in subclasses
 
     # Node Configuration
     accepted_data_types: Set[DataType] = set()  # Allowed data types

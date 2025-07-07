@@ -11,7 +11,7 @@ from framework.core.decorators import node_telemetry
 
 class DelayNode(BaseNode):
     node_type = "delay"
-    # Accept all data
+    tags = ["data flow"]    
     accepted_data_types = set(DataType)
     accepted_formats = set(DataFormat)
     accepted_categories = set(DataCategory)

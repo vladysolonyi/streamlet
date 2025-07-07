@@ -6,6 +6,7 @@ from framework.data.data_types import DataType, DataFormat, DataCategory
 
 class ThresholdGate(BaseNode):
     node_type = "threshold_gate"
+    tags = ["Untested"]
     IS_GENERATOR = False  # Passive processor
 
     accepted_data_types = {DataType.STREAM, DataType.EVENT}

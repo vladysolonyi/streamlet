@@ -9,6 +9,7 @@ from framework.core.decorators import node_telemetry
 
 class AccumulatorNode(BaseNode):
     node_type = "accumulator"
+    tags = ["data flow"]
     accepted_data_types = {DataType.STREAM, DataType.EVENT}
     accepted_formats = {DataFormat.NUMERICAL, DataFormat.TEXTUAL, DataFormat.BINARY}
     accepted_categories = set(DataCategory)

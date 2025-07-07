@@ -13,6 +13,7 @@ from framework.core.decorators import node_telemetry
 class UDPIn(BaseNode):
     """Node for receiving data via UDP and emitting DataPackets"""
     node_type = "udp_in"
+    tags = ["network"]
     MIN_INPUTS = 0
     MAX_INPUTS = 0
     IS_GENERATOR = True

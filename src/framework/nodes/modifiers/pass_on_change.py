@@ -9,6 +9,7 @@ from framework.data.data_types import DataType, DataFormat, DataCategory
 
 class PassOnChangeNode(BaseNode):
     node_type = "pass_on_change"
+    tags = ["Untested"]
     accepted_data_types = {DataType.STREAM, DataType.EVENT, DataType.DERIVED}
     accepted_formats = {DataFormat.NUMERICAL, DataFormat.TEXTUAL, DataFormat.JSON}
     accepted_categories = set(DataCategory)

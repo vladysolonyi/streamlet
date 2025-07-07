@@ -8,6 +8,7 @@ from transformers import pipeline
 
 class KeywordExtractor(BaseNode):
     node_type = "keyword_extractor"
+    tags = ["Untested"]
     accepted_data_types = {DataType.STREAM, DataType.EVENT}
     accepted_formats = {DataFormat.TEXTUAL}
     accepted_categories = {DataCategory.GENERIC}
