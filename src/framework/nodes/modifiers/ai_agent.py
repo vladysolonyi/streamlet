@@ -13,16 +13,16 @@ from framework.core.decorators import node_telemetry
 class AIAgentNode(BaseNode):
     node_type = "ai_agent"
     tags = ["ai"]
-    # Accept both normal data and event packets
     accepted_data_types = {DataType.DERIVED, DataType.STREAM, DataType.STATIC, DataType.EVENT}
     accepted_formats = {DataFormat.TEXTUAL}
-    accepted_categories = {DataCategory.USER_ACTIVITY, DataCategory.SOCIAL}
+    accepted_categories = set(DataCategory)
     IS_GENERATOR = False
     MIN_INPUTS = 1
     MAX_INPUTS = 1
 
-    # regex to strip out any <think>…</think> blocks
+    # regex to strip out <think>…</think> and any ```…``` code fences
     THINK_RE = re.compile(r"<think>[\s\S]*?</think>", re.IGNORECASE)
+    FENCE_RE = re.compile(r"```[\s\S]*?```", re.IGNORECASE)
 
     class Params(BaseModel):
         api_key: str = Field(..., description="Groq API key")
@@ -40,7 +40,7 @@ class AIAgentNode(BaseNode):
         "You are a data analyst/processor/generator. Your task:\n"
         "{task}\n\n"
         "If input data is provided, analyze it; if not, just respond based on the task.\n"
-        "Return valid data format only (If one was mentioned above). Do not put any additional text or styling/code container.\n"
+        "Return valid JSON only.  Do not wrap your output in code fences or markdown.\n"
     )
 
     def __init__(self, config):
@@ -52,7 +52,6 @@ class AIAgentNode(BaseNode):
     @node_telemetry("on_data")
     def on_data(self, packet: DataPacket, _input_channel: str = None):
         try:
-            # Determine if this is just a trigger (EVENT) or real data
             if packet.data_type == DataType.EVENT:
                 data_payload: Optional[Any] = None
             else:
@@ -74,7 +73,6 @@ class AIAgentNode(BaseNode):
             self.logger.error(f"Analysis failed: {e}", exc_info=True)
 
     def _analyze_with_llm(self, data_payload: Optional[Any]) -> Any:
-        """Build prompt and call Groq; if data_payload is None, omit it."""
         prompt = self.BASE_PROMPT.format(task=self.params.analysis_task)
         if data_payload is not None:
             prompt += f"\n\nInput data:\n{data_payload}"
@@ -89,13 +87,13 @@ class AIAgentNode(BaseNode):
                 timeout=self.params.timeout
             )
             raw = resp.choices[0].message.content
-            # strip out any <think>…</think> annotations
+            # strip out any <think>…</think> or ```…``` fences
             raw = self.THINK_RE.sub("", raw)
+            raw = self.FENCE_RE.sub("", raw).strip()
         except Exception as e:
             self.logger.error(f"Groq API error: {e}")
             return {"error": str(e)}
 
-        # Parse or return raw based on output_format
         if self.params.output_format == "json":
             try:
                 return json.loads(raw)

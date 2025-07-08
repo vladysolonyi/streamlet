@@ -11,7 +11,7 @@ class PassOnChangeNode(BaseNode):
     node_type = "pass_on_change"
     tags = ["Untested"]
     accepted_data_types = {DataType.STREAM, DataType.EVENT, DataType.DERIVED}
-    accepted_formats = {DataFormat.NUMERICAL, DataFormat.TEXTUAL, DataFormat.JSON}
+    accepted_formats = {DataFormat.NUMERICAL, DataFormat.TEXTUAL}
     accepted_categories = set(DataCategory)
     IS_GENERATOR = False
     IS_ASYNC_CAPABLE = False

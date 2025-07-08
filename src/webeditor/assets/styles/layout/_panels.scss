@@ -3,9 +3,9 @@
 .panel {
   display: flex;
   flex-direction: column;
-  background: $bg-semidark;
   overflow: hidden;
   color: $bg-semidark;
+  opacity: 0.5;
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid $border;
@@ -23,4 +23,12 @@
     flex: 1;
     overflow: auto;
   }
+
+  &__body div:hover {
+    border-color: $color-primary;
+  }
+}
+
+.panel:hover {
+  opacity: 1;
 }

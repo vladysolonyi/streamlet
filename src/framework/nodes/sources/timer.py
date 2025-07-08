@@ -3,10 +3,11 @@ from framework.core.decorators import node_telemetry
 from framework.data import DataType, DataFormat, DataCategory
 from pydantic import BaseModel
 from framework.nodes.base_node import BaseNode
+from framework.data.data_packet import DataPacket
 
 class TimerNode(BaseNode):
     node_type = "timer"
-    tags = ["untested"]
+    tags = ["utils"]
     accepted_data_types = set()          # No inputs
     accepted_formats = set()
     accepted_categories = set()
@@ -16,6 +17,14 @@ class TimerNode(BaseNode):
     class Params(BaseModel):
         interval: float  = 1.0            # seconds between events
         use_textual: bool = False         # True => textual timestamp
+
+    def _update_reference(self, param_name: str, ref_path: str, packet: DataPacket):
+        super()._update_reference(param_name, ref_path, packet)
+        if param_name == "interval":
+            new_interval = float(self.params.interval)
+            self.logger.info(f"Interval ref updated to {new_interval}s – resetting timer")
+            self.last_processed = time.time()
+
 
     def should_process(self):
         # Trigger at set intervals

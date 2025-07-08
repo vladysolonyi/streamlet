@@ -70,7 +70,7 @@ class AIParserNode(BaseNode):
                     model=self.params.model,
                     temperature=self.params.temperature,
                     max_tokens=self.params.max_tokens,
-                    timeout=self.params.timeout
+                    timeout=self.params.timeout,
                 )
                 raw = resp.choices[0].message.content
                 self.logger.debug(f"Raw LLM output:\n{raw}")
