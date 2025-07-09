@@ -38,7 +38,6 @@ export const DnDProvider = ({ children }) => {
         setNodeTypes(types);
       } catch (error) {
         console.error("Failed to fetch node types:", error);
-        // Use empty types - we'll try to load from localStorage instead
       }
     }
   }, []);

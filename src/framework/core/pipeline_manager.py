@@ -24,7 +24,6 @@ class PipelineManager:
         pipeline_id = str(uuid.uuid4())
         pipeline = Pipeline(config, pipeline_id)
         
-        # Add this: Build the pipeline before storing
         pipeline.build()
         
         self.pipelines[pipeline_id] = pipeline

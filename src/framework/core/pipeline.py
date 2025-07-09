@@ -91,7 +91,6 @@ class Pipeline:
                     pipeline_thread.join(timeout=5)
                     if pipeline_thread.is_alive():
                         self.logger.warning("Pipeline thread did not terminate in time")
-                        # Force terminate if needed
                         try:
                             import ctypes
                             ctypes.pythonapi.PyThreadState_SetAsyncExc(
@@ -171,7 +170,6 @@ class Pipeline:
 
             # Third pass: initialize input buffers
             for node in self.nodes:
-                # Initialize input buffers with actual channel names
                 node.input_buffers = {}
                 for input_channel in node.inputs:
                     node.input_buffers[input_channel] = []

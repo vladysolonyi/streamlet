@@ -245,14 +245,7 @@ async def get_data_specification():
         "categories": {cat.name: cat.value for cat in DataCategory},
         "lifecycle_states": {ls.name: ls.value for ls in LifecycleState},
         "sensitivity_levels": {sl.name: sl.value for sl in SensitivityLevel},
-        "sources": {src.name: src.value for src in DataSource},
-        
-        # For surveillance critique - add semantic meanings
-        "type_descriptions": {
-            DataType.STREAM.value: "Real-time surveillance feeds",
-            DataCategory.GEOSPATIAL.value: "Location tracking data",
-            SensitivityLevel.RESTRICTED.value: "Classified surveillance material"
-        }
+        "sources": {src.name: src.value for src in DataSource}
     }
 
 @app.websocket("/ws/telemetry")

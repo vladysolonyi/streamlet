@@ -12,4 +12,4 @@ dependencies:
   - msgpack-python
   - pip
   - pip:
-      - -e . # Install your package in editable mode
+      - -e .
